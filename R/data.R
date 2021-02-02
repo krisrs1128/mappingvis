@@ -21,7 +21,9 @@ impute_na <- function(x, val = 0) {
     x
 }
 
-#' @improtFrom gdalUtils gdalbuildvrt
+#' Fast Subset Read
+#'
+#' @importFrom gdalUtils gdalbuildvrt
 #' @export
 read_subset <- function(x_path, te, band_names = NULL) {
     tmp <- tempfile()
@@ -34,6 +36,9 @@ read_subset <- function(x_path, te, band_names = NULL) {
     result
 }
 
+#' Write patch to file
+#'
+#' @importFrom dplyr %>%
 #' @importFrom sf st_point st_buffer st_geometry st_bbox
 #' @export
 generate_patch <- function(x_path, center, max_na = 0.2, subset_inputs=NULL) {
@@ -59,6 +64,9 @@ generate_patch <- function(x_path, center, max_na = 0.2, subset_inputs=NULL) {
   list(x = x, meta = point, raster = x_raster)
 }
 
+#' Extract Label
+#'
+#' @importFrom dplyr %>%
 #' @importFrom raster extent rasterize
 #' @importFrom sf st_bbox st_crop st_zm
 #' @importFrom abind abind
@@ -85,7 +93,10 @@ label_mask <- function(ys, x_raster) {
   y_
 }
 
+#' Write patches to file
+#'
 #' @importFrom sf write_sf
+#' @importFrom stringr str_c
 #' @export
 write_patches <- function(x_path, ys, centers, out_dir) {
   unlink(out_dir)
@@ -108,4 +119,24 @@ write_patches <- function(x_path, ys, centers, out_dir) {
       j <- j + 1
     }
   }
+}
+
+
+#' Convert Array to EBImage Image
+#'
+#' @importFrom dplyr %>%
+#' @importFrom EBImage Image
+#' @export
+to_image <- function(x) {
+    as.array(x) %>%
+        aperm(c(2, 3, 1)) %>%
+        Image()
+}
+
+#' Convert Array to RGB Image
+#' @importFrom EBImage rgbImage
+#' @export
+to_rgb <- function(x, ch = c(1, 2, 3)) {
+    x <- as.array(x)
+    rgbImage(x[ch[1],, ], x[ch[2],, ], x[ch[3],, ])
 }
