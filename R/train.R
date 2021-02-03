@@ -29,8 +29,8 @@ train_epoch <- function(model, opt, loaders, scheduler, device) {
     losses <- list("train" = c(), "test" = c())
     for (xy in enumerate(loaders$train)) {
         opt$zero_grad()
-        y_hat <- model(xy[[1]]$to(device))
-        y <- xy[[2]]$to(device)
+        y_hat <- model(xy[[1]]$to(device = device))
+        y <- xy[[2]]$to(device = device)
 
         loss <- dice_loss(y_hat, y)
         loss$backward()
@@ -40,5 +40,5 @@ train_epoch <- function(model, opt, loaders, scheduler, device) {
         losses$train <- append(losses$train, loss$item())
     }
 
-    list(model, losses)
+    list(model = model, loss = losses)
 }
