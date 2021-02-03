@@ -38,6 +38,7 @@ read_subset <- function(x_path, te, band_names = NULL) {
 
 #' Write patch to file
 #'
+#' @import raster
 #' @importFrom dplyr %>%
 #' @importFrom sf st_point st_buffer st_geometry st_bbox
 #' @export
@@ -51,8 +52,7 @@ generate_patch <- function(x_path, center, max_na = 0.2, subset_inputs=NULL) {
     st_geometry()
 
   x_raster <- read_subset(x_path, st_bbox(point))
-  x <- x_raster %>%
-    as.array()
+  x <- as.array(x_raster)
   x <- x[,, subset_inputs]
   if (mean(is.na(x)) < max_na) {
     x <- impute_na(x) %>%
@@ -90,7 +90,8 @@ label_mask <- function(ys, x_raster) {
 
   y_[!is.na(y_)] <- 1
   y_[is.na(y_)] <- 0
-  y_
+  background <- 1 - apply(y_, 3, max)
+  abind(y_, background)
 }
 
 #' Write patches to file
