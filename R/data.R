@@ -73,8 +73,8 @@ generate_patch <- function(x_path, center, max_na = 0.2, subset_inputs=NULL) {
 #' @importFrom purrr map
 #' @export
 label_mask <- function(ys, x_raster) {
-  box <- extent(x_raster) %>%
-    st_bbox()
+  box_ <- extent(x_raster)
+  box <- c(xmin = box_[1], xmax = box_[2], ymin = box_[3], ymax = box_[4])
 
   rasterize_ <- function(z, p) {
     if (nrow(z) == 0) {
@@ -84,13 +84,13 @@ label_mask <- function(ys, x_raster) {
       as.array()
   }
 
-  y_ <- map(ys, ~ st_crop(., box) %>% st_zm()) %>%
+  y_ <- map(ys, ~ st_crop(., box)) %>%
     map(~ rasterize_(., x_raster)) %>%
     abind()
 
   y_[!is.na(y_)] <- 1
   y_[is.na(y_)] <- 0
-  background <- 1 - apply(y_, 3, max)
+  background <- 1 - apply(y_, c(1, 2), max)
   abind(y_, background)
 }
 
@@ -122,22 +122,21 @@ write_patches <- function(x_path, ys, centers, out_dir) {
   }
 }
 
-
 #' Convert Array to EBImage Image
 #'
 #' @importFrom dplyr %>%
 #' @importFrom EBImage Image
 #' @export
 to_image <- function(x) {
-    as.array(x) %>%
-        aperm(c(2, 3, 1)) %>%
-        Image()
+  as.array(x) %>%
+      aperm(c(2, 3, 1)) %>%
+      Image()
 }
 
 #' Convert Array to RGB Image
 #' @importFrom EBImage rgbImage
 #' @export
 to_rgb <- function(x, ch = c(1, 2, 3)) {
-    x <- as.array(x)
-    rgbImage(x[ch[1],, ], x[ch[2],, ], x[ch[3],, ])
+  x <- as.array(x)
+  rgbImage(x[ch[1],, ], x[ch[2],, ], x[ch[3],, ])
 }
