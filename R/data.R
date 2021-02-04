@@ -122,21 +122,16 @@ write_patches <- function(x_path, ys, centers, out_dir) {
   }
 }
 
-#' Convert Array to EBImage Image
+
+#' Tensor to Raster
 #'
 #' @importFrom dplyr %>%
-#' @importFrom EBImage Image
+#' @importFrom abind aperm
+#' @importFrom raster brick
 #' @export
-to_image <- function(x) {
-  as.array(x) %>%
-      aperm(c(2, 3, 1)) %>%
-      Image()
-}
-
-#' Convert Array to RGB Image
-#' @importFrom EBImage rgbImage
-#' @export
-to_rgb <- function(x, ch = c(1, 2, 3)) {
-  x <- as.array(x)
-  rgbImage(x[ch[1],, ], x[ch[2],, ], x[ch[3],, ])
+to_raster <- function(x) {
+    x %>%
+        as.array() %>%
+        aperm(c(2, 3, 1)) %>%
+        brick()
 }
