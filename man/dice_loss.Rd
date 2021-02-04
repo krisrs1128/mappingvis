@@ -4,7 +4,7 @@
 \alias{dice_loss}
 \title{Dice loss}
 \usage{
-dice_loss(y_hat, y, smooth = 1, weights = c(0.4, 0.6))
+dice_loss(y_hat, y, smooth = 1, weights = c(0.8, 1.2, 0.1))
 }
 \description{
 Dice loss

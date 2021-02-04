@@ -11,7 +11,7 @@ dice_loss_ <- function(y_hat, y, smooth = 1) {
 #' Dice loss
 #' @import torch
 #' @export
-dice_loss <- function(y_hat, y, smooth = 1, weights = c(0.4, 0.6)) {
+dice_loss <- function(y_hat, y, smooth = 1, weights = c(0.8, 1.2, 0.1)) {
     K <- dim(y)[2]
     losses <- torch_zeros(K)
     for (k in seq_len(K)) {
@@ -40,5 +40,5 @@ train_epoch <- function(model, opt, loaders, scheduler, device) {
         losses$train <- append(losses$train, loss$item())
     }
 
-    list(model = model, loss = losses)
+    list(model = model, opt = opt, scheduler = scheduler, loss = losses)
 }

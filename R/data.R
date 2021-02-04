@@ -126,7 +126,6 @@ write_patches <- function(x_path, ys, centers, out_dir) {
 #' Tensor to Raster
 #'
 #' @importFrom dplyr %>%
-#' @importFrom abind aperm
 #' @importFrom raster brick
 #' @export
 to_raster <- function(x) {

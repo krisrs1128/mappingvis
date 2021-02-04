@@ -9,8 +9,8 @@ unet <- nn_module(
   "unet",
 
   initialize = function(channels_in = 13,
-                        n_classes = 2,
-                        depth = 5,
+                        n_classes = 3,
+                        depth = 4,
                         n_filters = 6) {
 
     self$down_path <- nn_module_list()
