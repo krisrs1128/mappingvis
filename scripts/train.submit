@@ -12,3 +12,4 @@ request_cpus = 1
 +GPUJobLength = "short"
 request_memory = 4GB
 request_disk = 1GB
+queue
