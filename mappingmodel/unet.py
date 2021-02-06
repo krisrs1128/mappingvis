@@ -84,4 +84,5 @@ class Unet(nn.Module):
         for op in self.upblocks:
             x = op(x, decoder_outputs.pop())
 
-        return self.seg_layer(x)
+        x = self.seg_layer(x)
+        return F.softmax(x)

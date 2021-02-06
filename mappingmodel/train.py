@@ -15,22 +15,16 @@ def l2_reg(params, device):
     return penalty
 
 
-def loss(y_hat, y, params, device, smooth=1, weights=[0.8, 1.2, 0.1], lambda_reg=1):
+def loss(y_hat, y, params, device, smooth=1e-7, weights=[0.8, 1.2, 0.1], lambda_reg=1):
     penalty = l2_reg(params, device)
     return dice_loss(y, y, smooth, weights) + penalty
 
 
-def dice_loss_(y_hat, y, smooth=1):
-    return 1 - ((2 * (y_hat * y).sum() + smooth) / (y_hat.sum() + y.sum() + smooth))
-
-
-def dice_loss(y_hat, y, smooth=1, weights=[0.8, 1.2, 0.1]):
-    K = y.shape[1]
-    losses = torch.zeros(K)
-    for k in range(K):
-        losses[k] = weights[k] * dice_loss_(y_hat[:,k,:,:], y[:,k,:,:], smooth)
-
-    return losses.sum()
+def dice_loss(y, y_hat, smooth=1e-7):
+    dims = (0,) + tuple(range(2, y.ndimension()))
+    intersection = torch.sum(y_hat * y, dims)
+    cardinality = torch.sum(y_hat + y, dims)
+    return 1 - (2. * intersection / (cardinality + smooth)).mean()
 
 
 def train_epoch(model, loader, optimizer, device, epoch=0):
