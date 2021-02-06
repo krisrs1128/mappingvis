@@ -38,11 +38,17 @@ def train_epoch(model, loader, optimizer, device, epoch=0):
     model.train()
     n = len(loader.dataset)
     for i, (x, y) in enumerate(loader):
+        x = x.to(device)
+        y = y.to(device)
+
+        # gradient step
         optimizer.zero_grad()
         y_hat = model(x)
         l = loss(y_hat, y, model.parameters(), device)
         l.backward()
         optimizer.step()
+
+        # compute losses
         loss_ += l
         log_batch(epoch, i, n, loss_, loader.batch_size)
 
@@ -63,7 +69,7 @@ def validate(model, loader):
 
 def log_batch(epoch, i, n, loss, batch_size):
     print(
-        f"Epoch: {epoch}\tbatch: {i+1} of {int(n) // batch_size}\tloss: {loss/batch_size:.5f}",
+        f"Epoch: {epoch}\tbatch: {i} of {int(n) // batch_size}\tEpoch loss: {loss/batch_size:.5f}",
         end="\r",
         flush=True
     )
