@@ -98,8 +98,10 @@ label_mask <- function(ys, x_raster) {
 #'
 #' @importFrom sf write_sf
 #' @importFrom stringr str_c
+#' @importFrom reticulate import
 #' @export
 write_patches <- function(x_path, ys, centers, out_dir) {
+  np <- reticulate::import("numpy")
   unlink(out_dir)
   dir.create(out_dir)
 
@@ -114,8 +116,8 @@ write_patches <- function(x_path, ys, centers, out_dir) {
       x <- patch$x
 
       # save results
-      save(x, file = file.path(out_dir, str_c("x-", j, ".RData")))
-      save(y, file = file.path(out_dir, str_c("y-", j, ".RData")))
+      np$save(file.path(out_dir, str_c("x-", j, ".npy")), patch$x)
+      np$save(file.path(out_dir, str_c("y-", j, ".npy")), y)
       write_sf(patch$meta, file.path(out_dir, str_c("geo-", j, ".geojson")))
       j <- j + 1
     }
