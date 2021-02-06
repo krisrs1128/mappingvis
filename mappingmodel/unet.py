@@ -73,6 +73,7 @@ class Unet(nn.Module):
             in_channels, out_channels = out_channels, int(out_channels / 2)
 
         self.seg_layer = nn.Conv2d(2 * out_channels, outchannels, kernel_size=1)
+        self.softmax = torch.nn.Softmax(dim=1)
 
     def forward(self, x):
         decoder_outputs = []
@@ -85,4 +86,4 @@ class Unet(nn.Module):
             x = op(x, decoder_outputs.pop())
 
         x = self.seg_layer(x)
-        return F.softmax(x)
+        return self.softmax(x)
