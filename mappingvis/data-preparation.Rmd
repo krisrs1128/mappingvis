@@ -1,0 +1,71 @@
+---
+title: "Data Preparation"
+description: |
+  Generating data for model training.
+author:
+  - name: Kris Sankaran
+    affiliation: UW Madison
+date: "`r Sys.Date()`"
+output: distill::distill_article
+params:
+  data_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/"
+  basins: "/Users/kris/Desktop/teaching/mapping-vis/data/train_list-small.csv"
+  n_patches: 75
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library("RStoolbox")
+library("dplyr")
+library("sf")
+library("ggplot2")
+library("raster")
+library("tidyr")
+library("tmap")
+source("data.R")
+theme_set(theme_bw())
+```
+
+```{r}
+data_dir <- params$data_dir
+x <- brick(file.path(data_dir, "raw", "region.vrt"))
+basins <- read.csv(params$basins)
+y <- read_sf(file.path(data_dir, "raw", "Glacier_2005.shp")) %>%
+  filter(Sub_basin %in% basins$Sub_basin)
+ys <- y %>%
+  split(.$Glaciers)
+```
+
+We'll train using glaciers from the Dudh Koshi basin, and test using those from
+the Sun Koshi basin.
+
+```{r}
+tm_shape(y) +
+  tm_fill(col = "Glaciers", palette = c("#93b9c3", "#4e326a"))
+```
+```{r}
+coords <- y %>%
+  as.data.frame() %>%
+  dplyr::select(Longitude, Latitude) %>%
+  as.matrix()
+
+k_centers <- kmeans(coords, params$n_patches)$centers %>%
+  as.data.frame() %>%
+  mutate(type = "centroid")
+
+ggplot(y, aes(x = Longitude, y = Latitude)) +
+  geom_point(aes(col = Glaciers), size = 0.6, alpha = 1) +
+  geom_point(data = k_centers, col = "red") +
+  scale_color_manual(values = c("#93b9c3", "#4e326a"))
+```
+
+```{r}
+x_path <- file.path(data_dir, "raw", "region.vrt")
+k_mat <- k_centers %>%
+  dplyr::select(Longitude, Latitude) %>%
+  as.matrix()
+write_patches(x_path, ys, k_mat, file.path(data_dir, "processed"))
+```

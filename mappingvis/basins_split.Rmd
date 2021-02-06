@@ -1,0 +1,62 @@
+---
+title: "Split Basins"
+description: |
+  Splitting basins into train and test.
+author:
+  - name: Kris Sankaran
+    affiliation: UW Madison
+date: "`r Sys.Date()`"
+output: distill::distill_article
+params:
+  data_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/"
+  train_out: "/Users/kris/Desktop/teaching/mapping-vis/data/train_list-small.csv"
+  test_out: "/Users/kris/Desktop/teaching/mapping-vis/data/test_list-small.csv"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library("dplyr")
+library("sf")
+```
+
+```{r}
+data_dir <- params$data_dir
+y <- read_sf(file.path(data_dir, "raw", "Glacier_2005.shp"))
+```
+
+There are 63 basins total. We randomly assign 45 to train and 18 to test. We
+manually place Dudh koshi in test, because this is an area we're independently
+interested in.
+
+```{r}
+basin_counts <- y %>%
+  tibble() %>%
+  dplyr::select(-geometry) %>%
+  count(Sub_basin) %>%
+  arrange(desc(n))
+
+basin_counts
+```
+
+```{r}
+train_ix <- sample(seq_len(nrow(basin_counts)), 45)
+train_basins <- setdiff(basin_counts$Sub_basin[train_ix], "Dudh Koshi") %>%
+  sort()
+test_basins <- c(basin_counts$Sub_basin[-train_ix], "Dudh Koshi") %>%
+  unique() %>%
+  sort()
+train_basins
+test_basins
+```
+
+```{r}
+## uncomment for the small subset
+# train_basins <- c("Kokcha")
+# test_basins <- c("Dudh Koshi")
+write.csv(data.frame("Sub_basin" = train_basins), params$train_out, row.names = FALSE)
+write.csv(data.frame("Sub_basin" = test_basins), params$test_out, row.names = FALSE)
+```
+

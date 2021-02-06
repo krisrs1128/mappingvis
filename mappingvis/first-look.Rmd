@@ -1,0 +1,92 @@
+---
+title: "A First Look"
+description: |
+  An initial look at the raw data, with an eye towards preprocessing.
+author:
+  - name: Kris Sankaran
+    affiliation: UW Madison
+date: "`r Sys.Date()`"
+output: distill::distill_article
+params:
+  data_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library("RStoolbox")
+library("dplyr")
+library("ggplot2")
+library("sf")
+library("tidyr")
+library("tmap")
+source("data.R")
+theme_set(theme_bw())
+```
+
+```{r}
+data_dir <- params$data_dir
+x_path <- file.path(data_dir, "raw", "region.vrt")
+y <- read_sf(file.path(data_dir, "raw", "Glacier_2005.shp")) %>%
+  filter(Sub_basin == "Dudh Koshi")
+band_names <- brick(file.path(data_dir, "raw", "LE07_152035_20060917-warped.tiff")) %>%
+  names()
+```
+
+```{r}
+tm_shape(y) +
+  tm_fill(col = "Glaciers", palette = c("#93b9c3", "#4e326a"))
+```
+
+```{r}
+x <- read_subset(x_path, st_bbox(y), band_names)
+ggRGB(x, r = 5, g = 4, b = 2)
+```
+```{r}
+elevation <- x %>%
+  as.data.frame(xy = TRUE) %>%
+  dplyr::select(x, y, elevation, slope)
+```
+
+```{r}
+ggplot(elevation, aes(x = x, y = y)) +
+  geom_raster(aes(fill = slope)) +
+  scale_fill_gradient(low = "white", high = "black") +
+  coord_fixed()
+```
+
+Let's look at histograms of pixels, to motivate the need for normalizing /
+preprocessing.
+
+```{r}
+x_df <- x[sample(nrow(x), 250), ] %>%
+  as.data.frame()
+x_longer <- x_df %>%
+  pivot_longer(cols = everything())
+```
+
+```{r}
+ggplot(x_longer) +
+  geom_histogram(aes(x = value)) +
+  facet_wrap(~ name, scale = "free_x")
+```
+```{r}
+ggplot(x_df, aes(x = B1, y = B2, fill = log(..count..))) +
+  geom_hex(binwidth = 2) +
+  scale_fill_viridis_c() +
+  coord_fixed()
+
+ggplot(x_df %>% filter(B1 != 255, B2 != 255), aes(x = B1, y = B2, fill = log(..count..))) +
+  geom_hex(binwidth = 2) +
+  scale_fill_viridis_c() +
+  coord_fixed()
+
+ggplot(x_df, aes(x = B6_VCID_1, y = B6_VCID_2, fill = log(..count..))) +
+  geom_hex(binwidth = 2) +
+  scale_fill_viridis_c() +
+  coord_fixed()
+```
+
+
