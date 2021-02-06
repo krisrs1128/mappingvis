@@ -9,8 +9,9 @@ date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
   data_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/"
-  basins: "/Users/kris/Desktop/teaching/mapping-vis/data/train_list-small.csv"
-  n_patches: 75
+  out_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/test/"
+  basins: "/Users/kris/Desktop/teaching/mapping-vis/data/test_list-small.csv"
+  n_patches: 25
 ---
 
 ```{r setup, include=FALSE}
@@ -20,9 +21,13 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r}
 library("RStoolbox")
 library("dplyr")
+library("purrr")
+library("stringr")
+library("abind")
 library("sf")
 library("ggplot2")
 library("raster")
+library("gdalUtils")
 library("tidyr")
 library("tmap")
 source("data.R")
@@ -67,5 +72,5 @@ x_path <- file.path(data_dir, "raw", "region.vrt")
 k_mat <- k_centers %>%
   dplyr::select(Longitude, Latitude) %>%
   as.matrix()
-write_patches(x_path, ys, k_mat, file.path(data_dir, "processed"))
+write_patches(x_path, ys, k_mat, params$out_dir)
 ```
