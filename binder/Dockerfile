@@ -4,12 +4,12 @@ RUN pip3 install --no-cache --upgrade pip && \
     pip3 install --no-cache notebook
 
 # create user with a home directory
-ENV USER mapping
-ENV HOME /home/mapping
+ENV USER mapper
+ENV HOME /home/${USER}
 
 RUN adduser --disabled-password \
     --gecos "Default user" \
     --uid ${NB_UID} \
-    ${NB_USER}
+    ${USER}
 WORKDIR ${HOME}
 USER ${USER}
