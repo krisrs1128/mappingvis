@@ -10,6 +10,6 @@ ENV HOME /home/mapping
 RUN adduser --disabled-password \
     --gecos "Default user" \
     --uid ${NB_UID} \
-    ${USER}
+    ${NB_USER}
 WORKDIR ${HOME}
 USER ${USER}
