@@ -54,11 +54,11 @@ generate_patch <- function(x_path, center, max_na = 0.2, subset_inputs=NULL) {
   x_raster <- read_subset(x_path, st_bbox(point))
   x <- as.array(x_raster)
   x <- x[,, subset_inputs]
-  if (mean(is.na(x)) < max_na && mean(x == 0, na.rm = TRUE) < max_na) {
+  if (mean(is.na(x)) < max_na) {
     x <- impute_na(x) %>%
       equalize_input(range = c(-1, 1))
   } else {
-    return()
+    stop("Too many missing values.")
   }
   list(x = x, meta = point, raster = x_raster)
 }
@@ -106,22 +106,17 @@ write_patches <- function(x_path, ys, centers, out_dir) {
 
   j <- 1
   geo <- list()
-  #for (i in seq_len(nrow(centers))) {
-  for (i in seq(80, nrow(centers), 1)) {
-    patch <- generate_patch(x_path, centers[i, ])
-
-    # if not too many NAs, get mask and crop
-    if (!is.null(patch)) {
-      y <- tryCatch({label_mask(ys, patch$raster)}, error = function(e) { return(NA) })
-      if (is.na(y)) next
-      x <- patch$x
-
-      # save results
-      np$save(file.path(out_dir, str_c("x-", j, ".npy")), patch$x)
-      np$save(file.path(out_dir, str_c("y-", j, ".npy")), y)
-      write_sf(patch$meta, file.path(out_dir, str_c("geo-", j, ".geojson")))
-      j <- j + 1
-    }
+  for (i in seq_len(nrow(centers))) {
+    err <- function(e) { return(NA) }
+    patch <- tryCatch({ generate_patch(x_path, centers[i, ]) }, error = err)
+    y <- tryCatch({ label_mask(ys, patch$raster) }, error = err)
+    if (is.na(y) || is.na(patch)) next
+    
+    # save results
+    np$save(file.path(out_dir, str_c("x-", j, ".npy")), patch$x)
+    np$save(file.path(out_dir, str_c("y-", j, ".npy")), y)
+    write_sf(patch$meta, file.path(out_dir, str_c("geo-", j, ".geojson")))
+    j <- j + 1
   }
 }
 
