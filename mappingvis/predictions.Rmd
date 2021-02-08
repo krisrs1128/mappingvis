@@ -1,0 +1,127 @@
+---
+title: "Analyzing Predictions"
+description: |
+    Studying saved predictions from a model.
+author:
+  - name: Kris Sankaran
+    affiliation: UW Madison
+date: "`r Sys.Date()`"
+output: distill::distill_article
+params:
+  preds_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/preds/"
+  geo_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/processed/"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library("RStoolbox")
+library("dplyr")
+library("ggplot2")
+library("sf")
+library("reticulate")
+library("stringr")
+library("tidyr")
+library("tmap")
+source("data.R")
+np <- reticulate::import("numpy")
+theme_set(theme_bw())
+```
+
+```{r}
+precision_recall_curve <- function(y, y_hat, n_thresh=25, low=0.1, high=0.7) {
+  p_thresh <- seq(low, high, length.out = n_thresh)
+  metrics <- tibble(
+    threshold = p_thresh,
+    precision = rep(0, n_thresh),
+    recall = rep(0, n_thresh)
+  )
+  
+  for (i in seq_len(n_thresh)) {
+    y_ <- as.numeric(y_hat > p_thresh[i])
+    intersection <- sum(y * y_)
+    
+    metrics$precision[i] <- intersection / sum(y_)
+    metrics$recall[i] <- intersection / sum(y)
+  }
+  
+  metrics
+}
+```
+
+```{r}
+y_hat_paths <- dir(params$preds_dir, "^y_hat-*", full = TRUE)
+metrics <- vector(mode = "list", length = 3 * length(y_hat_paths))
+
+ix <- 1
+for (i in seq_along(y_hat_paths)) {
+  y_hat <- np$load(y_hat_paths[i])
+  y_path <- str_replace(y_hat_paths[i], "y_hat", "y")
+  y <- np$load(y_path)
+  for (k in seq_len(nrow(y))) {
+    metrics[[ix]] <- precision_recall_curve(y[k,,], y_hat[k,,]) 
+    metrics[[ix]]$class <- k
+    metrics[[ix]]$i <- i
+    ix <- ix + 1
+  }
+}
+
+metrics <- bind_rows(metrics)
+```
+
+```{r}
+ggplot(metrics, aes(x = threshold, y = precision)) +
+  geom_point(size = 0.9, alpha = 0.6) +
+  geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
+  facet_wrap(~ class)
+
+ggplot(metrics, aes(x = threshold, y = recall)) +
+  geom_point(size = 0.9, alpha = 0.6) +
+  geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
+  facet_wrap(~ class)
+```
+```{r}
+avg_metrics <- metrics %>%
+  filter(threshold == 0.2) %>%
+  group_by(i, class) %>%
+  summarise(avg_precision = mean(precision), avg_recall = mean(recall)) %>%
+  arrange(class, desc(avg_precision), desc(avg_recall))
+```
+```{r}
+head(avg_metrics)
+```
+
+```{r}
+i <- 65
+y_hat <- np$load(y_hat_paths[i])
+y_path <- str_replace(y_hat_paths[i], "y_hat", "y")
+y <- np$load(y_path)
+image(y_hat[1,,] > 0.336, asp = 1)
+image(y[1,,], asp = 1)
+```
+
+```{r}
+library("raster")
+y_df <- raster(y[2,,]) %>%
+  as.data.frame(xy = TRUE) %>%
+  rename("truth" = "layer")
+
+y_hat_df <- raster(y_hat[2,,]) %>%
+  as.data.frame(xy = TRUE) %>%
+  rename("pred" = "layer")
+```
+
+```{r}
+y_df <- y_df %>%
+  left_join(y_hat_df)
+```
+
+```{r}
+ggplot(y_df) +
+  geom_histogram(
+    aes(x = pred)
+  ) +
+  facet_grid(truth ~ ., scale = "free_y")
+```
