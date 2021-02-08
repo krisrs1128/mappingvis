@@ -16,5 +16,5 @@ RUN adduser --disabled-password \
 WORKDIR ${HOME}
 USER ${USER}
 
-RUN git clone git@github.com:krisrs1128/mappingvis.git
+RUN git clone https://github.com/krisrs1128/mappingvis.git
 RUN mkdir /data/
