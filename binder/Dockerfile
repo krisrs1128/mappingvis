@@ -6,10 +6,11 @@ RUN pip3 install --no-cache --upgrade pip && \
 # create user with a home directory
 ENV USER mapper
 ENV HOME /home/${USER}
+echo ${NB_USER}
 
 RUN adduser --disabled-password \
     --gecos "Default user" \
     --uid ${NB_UID} \
-    ${USER}
+    ${NB_USER}
 WORKDIR ${HOME}
 USER ${USER}
