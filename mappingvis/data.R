@@ -132,3 +132,9 @@ to_raster <- function(x) {
         aperm(c(2, 3, 1)) %>%
         brick()
 }
+
+#' Helper to convert npy to raster bricks
+load_npy <- function(p) {
+  np$load(p) %>%
+    to_raster()
+}

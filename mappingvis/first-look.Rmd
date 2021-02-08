@@ -8,7 +8,7 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  data_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/"
+  data_dir: "/home/mapper/data/"
 ---
 
 ```{r setup, include=FALSE}
@@ -26,6 +26,9 @@ library("tmap")
 source("data.R")
 theme_set(theme_bw())
 ```
+```{r}
+```
+
 
 ```{r}
 data_dir <- params$data_dir

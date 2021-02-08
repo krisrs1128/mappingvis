@@ -1,0 +1,7 @@
+libgdal-dev
+gdal-bin
+libudunits2-0
+libudunits2-dev
+libfftw3-3
+libfftw3-dev
+libtiff5-dev
