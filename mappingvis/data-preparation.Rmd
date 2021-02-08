@@ -8,11 +8,14 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  data_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/"
-  out_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/test/"
-  basins: "/Users/kris/Desktop/teaching/mapping-vis/data/test_list-small.csv"
-  n_patches: 25
+  x_path: "/Users/kris/Desktop/teaching/mapping-vis/data/complete/region.vrt"
+  y_path: "/Users/kris/Desktop/teaching/mapping-vis/data/raw/Glacier_2005.shp"
+  out_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/train/"
+  basins: "/Users/kris/Desktop/teaching/mapping-vis/data/train_list.csv"
+  n_patches: 2000
 ---
+
+Rscript -e "rmarkdown::render('data-preparation.Rmd', params = list(data_dir = '/datadrive/glaciers/unique_tiles/warped', out_dir = '/datadrive/glaciers/mappingvis/processed2/', basins = '/datdrive/glaciers/mappingvis/train_list.csv', n_patches = 3000))"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -35,10 +38,10 @@ theme_set(theme_bw())
 ```
 
 ```{r}
-data_dir <- params$data_dir
-x <- brick(file.path(data_dir, "raw", "region.vrt"))
+x <- brick(params$x_path)
 basins <- read.csv(params$basins)
-y <- read_sf(file.path(data_dir, "raw", "Glacier_2005.shp")) %>%
+y <- read_sf(params$y_path) %>%
+  filter(Latitude > 1) %>% # artifact
   filter(Sub_basin %in% basins$Sub_basin)
 ys <- y %>%
   split(.$Glaciers)
@@ -47,10 +50,11 @@ ys <- y %>%
 We'll train using glaciers from the Dudh Koshi basin, and test using those from
 the Sun Koshi basin.
 
-```{r}
+```{r eval = FALSE}
 tm_shape(y) +
   tm_fill(col = "Glaciers", palette = c("#93b9c3", "#4e326a"))
 ```
+
 ```{r}
 coords <- y %>%
   as.data.frame() %>%
@@ -62,15 +66,14 @@ k_centers <- kmeans(coords, params$n_patches)$centers %>%
   mutate(type = "centroid")
 
 ggplot(y, aes(x = Longitude, y = Latitude)) +
-  geom_point(aes(col = Glaciers), size = 0.6, alpha = 1) +
-  geom_point(data = k_centers, col = "red") +
+  geom_point(aes(col = Glaciers), size = 0.6) +
+  geom_point(data = k_centers, col = "red", size = 0.1, alpha = 0.4) +
   scale_color_manual(values = c("#93b9c3", "#4e326a"))
 ```
 
 ```{r}
-x_path <- file.path(data_dir, "raw", "region.vrt")
 k_mat <- k_centers %>%
   dplyr::select(Longitude, Latitude) %>%
   as.matrix()
-write_patches(x_path, ys, k_mat, params$out_dir)
+write_patches(params$x_path, ys, k_mat, params$out_dir)
 ```

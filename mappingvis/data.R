@@ -54,13 +54,12 @@ generate_patch <- function(x_path, center, max_na = 0.2, subset_inputs=NULL) {
   x_raster <- read_subset(x_path, st_bbox(point))
   x <- as.array(x_raster)
   x <- x[,, subset_inputs]
-  if (mean(is.na(x)) < max_na) {
+  if (mean(is.na(x)) < max_na && mean(x == 0, na.rm = TRUE) < max_na) {
     x <- impute_na(x) %>%
       equalize_input(range = c(-1, 1))
   } else {
     return()
   }
-
   list(x = x, meta = point, raster = x_raster)
 }
 
@@ -107,12 +106,14 @@ write_patches <- function(x_path, ys, centers, out_dir) {
 
   j <- 1
   geo <- list()
-  for (i in seq_len(nrow(centers))) {
+  #for (i in seq_len(nrow(centers))) {
+  for (i in seq(80, nrow(centers), 1)) {
     patch <- generate_patch(x_path, centers[i, ])
 
     # if not too many NAs, get mask and crop
     if (!is.null(patch)) {
-      y <- label_mask(ys, patch$raster)
+      y <- tryCatch({label_mask(ys, patch$raster)}, error = function(e) { return(NA) })
+      if (is.na(y)) next
       x <- patch$x
 
       # save results
