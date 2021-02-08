@@ -20,8 +20,9 @@ knitr::opts_chunk$set(echo = FALSE)
 library("RStoolbox")
 library("dplyr")
 library("ggplot2")
-library("sf")
+library("raster")
 library("reticulate")
+library("sf")
 library("stringr")
 library("tidyr")
 library("tmap")
@@ -73,12 +74,10 @@ metrics <- bind_rows(metrics)
 
 ```{r}
 ggplot(metrics, aes(x = threshold, y = precision)) +
-  geom_point(size = 0.9, alpha = 0.6) +
   geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
   facet_wrap(~ class)
 
 ggplot(metrics, aes(x = threshold, y = recall)) +
-  geom_point(size = 0.9, alpha = 0.6) +
   geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
   facet_wrap(~ class)
 ```
@@ -90,20 +89,21 @@ avg_metrics <- metrics %>%
   arrange(class, desc(avg_precision), desc(avg_recall))
 ```
 ```{r}
-head(avg_metrics)
+avg_metrics
 ```
 
 ```{r}
-i <- 65
-y_hat <- np$load(y_hat_paths[i])
-y_path <- str_replace(y_hat_paths[i], "y_hat", "y")
-y <- np$load(y_path)
-image(y_hat[1,,] > 0.336, asp = 1)
-image(y[1,,], asp = 1)
+i <- 28
+y_hat <- load_npy(y_hat_paths[i])
+y <- load_npy(str_replace(y_hat_paths[i], "y_hat", "y"))
+x <- load_npy(str_replace(y_hat_paths[i], "y_hat", "x"))
+
+ggRGB(subset(-x, c(5, 4, 2)))
+ggRGB(-y_hat, r = 2, g = 1, b = 1)
+ggRGB(-y, r = 2, g = 1, b = 1)
 ```
 
 ```{r}
-library("raster")
 y_df <- raster(y[2,,]) %>%
   as.data.frame(xy = TRUE) %>%
   rename("truth" = "layer")
@@ -116,12 +116,7 @@ y_hat_df <- raster(y_hat[2,,]) %>%
 ```{r}
 y_df <- y_df %>%
   left_join(y_hat_df)
-```
-
-```{r}
 ggplot(y_df) +
-  geom_histogram(
-    aes(x = pred)
-  ) +
+  geom_histogram(aes(x = pred), binwidth = 0.005) +
   facet_grid(truth ~ ., scale = "free_y")
 ```
