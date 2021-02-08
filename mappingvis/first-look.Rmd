@@ -8,7 +8,7 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  data_dir: "/home/data/"
+  data_dir: "/home/mapper/data/"
 ---
 
 ```{r setup, include=FALSE}
@@ -27,7 +27,6 @@ source("data.R")
 theme_set(theme_bw())
 ```
 ```{r}
-
 ```
 
 
