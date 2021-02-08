@@ -17,4 +17,4 @@ WORKDIR ${HOME}
 USER ${USER}
 
 RUN git clone https://github.com/krisrs1128/mappingvis.git
-RUN mkdir /data/
+RUN mkdir ${HOME}/data/
