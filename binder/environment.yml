@@ -1,6 +1,0 @@
-dependencies:
-  - addict
-  - matplotlib
-  - numpy
-  - pytorch
-  - torchvision
