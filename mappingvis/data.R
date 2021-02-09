@@ -101,8 +101,8 @@ label_mask <- function(ys, x_raster) {
 #' @export
 write_patches <- function(x_path, ys, centers, out_dir) {
   np <- import("numpy")
-  unlink(out_dir)
-  dir.create(out_dir)
+  unlink(out_dir, force = TRUE)
+  dir.create(out_dir, recursive = TRUE)
 
   j <- 1
   geo <- list()
@@ -127,10 +127,10 @@ write_patches <- function(x_path, ys, centers, out_dir) {
 #' @importFrom raster brick
 #' @export
 to_raster <- function(x) {
-    x %>%
-        as.array() %>%
-        aperm(c(2, 3, 1)) %>%
-        brick()
+  x %>%
+      as.array() %>%
+      aperm(c(2, 3, 1)) %>%
+      brick()
 }
 
 
