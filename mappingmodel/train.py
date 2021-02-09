@@ -68,7 +68,7 @@ def train_epoch(model, loader, optimizer, device, epoch=0):
         optimizer.step()
 
         # compute losses
-        loss_ += l
+        loss_ += l.item()
         log_batch(epoch, i, n, loss_, loader.batch_size)
 
     return loss_ / n
