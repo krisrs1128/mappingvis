@@ -9,7 +9,7 @@ date: "`r Sys.Date()`"
 #output: distill::distill_article
 output: pdf_document
 params:
-  data_dir: "/home/jovyan/data/"
+  data_dir: "/Users/kris/data/"
   data_links: "https://uwmadison.box.com/shared/static/khd0plylp0o2tyhxlpizjj9rz7n5czya.csv"
 ---
 
@@ -53,7 +53,7 @@ Madison Box folder. We first download a file containing all the raw data
 links^[It's very meta.], and then loop over just those links. This step can take
 some time, because each satellite image is about 3GB.
 
-```{r}
+```{r, eval = FALSE}
 # index file, giving links to all the imagery
 f <- tempfile()
 download.file(params$data_links, f)
@@ -152,7 +152,13 @@ it becomes clear that we're going to have to preprocess these data before
 modeling: The ranges across sensors can vary substantially.
 
 ```{r}
-x_df <- x[sample(nrow(x), 250), ] %>% # subset pixels
+dim(x)
+```
+
+
+```{r}
+sample_ix <- sample(nrow(x), 10)
+x_df <- x[sample_ix, sample_ix, ] %>% # subset pixels
   as.data.frame()
 x_longer <- x_df %>%
   pivot_longer(cols = everything())
