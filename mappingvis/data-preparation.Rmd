@@ -8,8 +8,8 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  raw_dir: "/data/raw"
-  out_dir: "/data/processed/train/"
+  raw_dir: "/Users/kris/data/raw"
+  out_dir: "/Users/kris/data/processed/train/"
   basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
   # basins: https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv for test basins
   n_patches: 2000
@@ -30,22 +30,20 @@ library("reticulate")
 library("sf")
 library("stringr")
 library("tidyr")
+library("readr")
+library("ggplot2")
 use_condaenv("notebook")
 source("data.R")
 theme_set(theme_bw())
 ```
 
 ```{r}
-vrt_path <- file.path(params$raw_dir, "region.vrt")
 y_path <- file.path(params$raw_dir, "glaciers.geojson")
 
-x <- brick(vrt_path)
 basins <- read_csv(params$basins)
 y <- read_sf(y_path) %>%
   filter(Sub_basin %in% basins$Sub_basin) %>%
   filter(Latitude > 1) %>% # seems like missing data set to 1
-ys <- y %>%
-  split(.$Glaciers)
 ```
 
 We'll train using glaciers from the Dudh Koshi basin, and test using those from
@@ -76,10 +74,14 @@ ggplot(y, aes(x = Longitude, y = Latitude)) +
 k_mat <- k_centers %>%
   dplyr::select(Longitude, Latitude) %>%
   as.matrix()
-write_patches(params$x_path, ys, k_mat, params$out_dir)
+write_patches(vrt_path, ys, k_mat, params$out_dir)
 ```
 
 ```{r}
-unlink(params$raw_dir, recursive = TRUE, force = TRUE)
+vrt_path <- file.path(params$raw_dir, "region.vrt")
+ys <- y %>%
+  split(.$Glaciers)
+
+unlink(vrt_path, ys, recursive = TRUE, force = TRUE)
 ```
 
