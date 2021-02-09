@@ -100,7 +100,7 @@ label_mask <- function(ys, x_raster) {
 #' @importFrom reticulate import
 #' @export
 write_patches <- function(x_path, ys, centers, out_dir) {
-  np <- reticulate::import("numpy")
+  np <- import("numpy")
   unlink(out_dir)
   dir.create(out_dir)
 
@@ -132,6 +132,7 @@ to_raster <- function(x) {
         aperm(c(2, 3, 1)) %>%
         brick()
 }
+
 
 #' Helper to convert npy to raster bricks
 load_npy <- function(p) {
