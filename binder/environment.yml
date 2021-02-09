@@ -2,4 +2,4 @@ dependencies:
   - addict==2.2.1
   - numpy==1.20.0
   - pytorch==1.7.1
-  - torchvision==nightly
+  - torchvision
