@@ -16,7 +16,7 @@ import torch
 def create_dir(p):
     if p.exists():
         shutil.rmtree(p)
-    p.mkdir()
+    p.mkdir(recursive=True)
 
 class Rotate:
     def __init__(self, angles):
