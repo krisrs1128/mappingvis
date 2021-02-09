@@ -15,9 +15,25 @@ params:
   n_patches: 70
 ---
 
+1. In these notes, we generate and visualize patches of data that will be used
+to train the mapping model. This is necessary for a few different reasons,
+
+* Preprocessing: The different channels need to be normalized, since they have
+such different ranges. There are also a few channels that we should drop, like
+the `BQA` quality channel we saw earlier.
+* Imbalance: The glaciers only make up a relatively fraction of the total area
+that we have imagery for. Our model can be trained more efficiently by zooming
+into the parts of the region that actually have glaciers.
+* Image size: Even if we completed these preprocessing steps, each satellite
+image is much larger than anything a machine learning algorithm could work with.
+We'll need to break the processed imagery into pieces that can be sequentially
+streamed in for training the model^[For reference, the famous MNIST example ]
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
+
 
 ```{r}
 library("abind")
