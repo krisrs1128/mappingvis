@@ -113,6 +113,15 @@ images are not like ordinary images from a camera -- they have many sensors. In
 our case, each pixel is associated with 15 measurements. For example, the block
 below first plots the RGB colors associated with the region before showing a
 composite that turns all the glaciers blue.
+```{r}
+y <- read_sf(file.path(data_dir, "glaciers.geojson")) %>%
+  filter(Sub_basin == "Dudh Koshi")
+x <- read_subset("/Users/kris/Desktop/teaching/mapping-vis/data/raw/region.vrt", st_bbox(y))
+writeRaster(x, file.path(data_dir, "LE07_140041_20071221-subset.tiff"), format="GTiff")
+```
+```{r}
+ggRGB(x, r = 15, g = NULL, b = NULL)
+```
 
 ```{r}
 x <- read_subset(vrt_path, st_bbox(y))
@@ -137,10 +146,10 @@ extracts the slope channel from the satellite image and visualizes it using
 standard ggplot2. It seems like the debris-covered glaciers are relatively flat.
 
 ```{r}
-elevation <- as.data.frame(x, xy = TRUE) %>%
+slope <- as.data.frame(x, xy = TRUE) %>%
   dplyr::select(x, y, slope)
 
-ggplot(elevation, aes(x = x, y = y)) +
+ggplot(slope, aes(x = x, y = y)) +
   geom_raster(aes(fill = slope)) +
   scale_fill_gradient(low = "white", high = "black") +
   coord_fixed()
