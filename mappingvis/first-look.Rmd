@@ -152,12 +152,7 @@ it becomes clear that we're going to have to preprocess these data before
 modeling: The ranges across sensors can vary substantially.
 
 ```{r}
-dim(x)
-```
-
-
-```{r}
-sample_ix <- sample(nrow(x), 10)
+sample_ix <- sample(nrow(x), 100)
 x_df <- x[sample_ix, sample_ix, ] %>% # subset pixels
   as.data.frame()
 x_longer <- x_df %>%
