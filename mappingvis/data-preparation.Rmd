@@ -12,10 +12,8 @@ params:
   out_dir: "/Users/kris/data/processed/train/"
   basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
   # basins: https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv for test basins
-  n_patches: 10
+  n_patches: 70
 ---
-
-Rscript -e "rmarkdown::render('data-preparation.Rmd', params = list(data_dir = '/datadrive/glaciers/unique_tiles/warped', out_dir = '/datadrive/glaciers/mappingvis/processed2/', basins = '/datdrive/glaciers/mappingvis/train_list.csv', n_patches = 3000))"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -77,16 +75,15 @@ p + coord_sf(xlim = c(70.7, 71.2),  ylim = c(36.2, 36.5))
 vrt_path <- file.path(params$raw_dir, "region.vrt")
 ys <- y %>% split(.$Glaciers)
 
-patch <- generate_patch(vrt_path, centers[1, ])
-y <- label_mask(ys, patch$raster)
+patch <- generate_patch(vrt_path, c(71.2, 36.3))
+patch_y <- label_mask(ys, patch$raster)
 ```
 ```{r}
-ggRGB(brick(patch$x))
+ggRGB(brick(-patch$x), r = 5, g = 4, b = 2)
 ggRGB(brick(patch$x), r = 12, g = 12, b = 12)
-ggRGB(brick(y), r = NULL)
+ggRGB(brick(patch_y), r = NULL)
 ```
 
 ```{r}
-write_patches(vrt_path, ys, centers, params$out_dir)
+#write_patches(vrt_path, ys, centers, params$out_dir)
 ```
-

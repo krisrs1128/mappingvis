@@ -29,9 +29,8 @@ read_subset <- function(x_path, te, band_names = NULL) {
     tmp <- tempfile()
     gdalbuildvrt(x_path, tmp, te = te)
     result <- brick(tmp)
-    if (!is.null(band_names)) {
-        names(result) <- band_names
-    }
+    if (is.null(band_names)) {
+        names(result) <- c("B1", "B2", "B3", "B4", "B5", "B6_VCID_1", "B6_VCID_2", "B7", "B8", "BQA", "ndvi", "ndsi", "ndwi", "elevation", "slope") }
 
     result
 }

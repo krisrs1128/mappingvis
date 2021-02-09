@@ -56,7 +56,7 @@ some time, because each satellite image is about 3GB.
 
 ```{r, eval = FALSE}
 # download all linked data
-data_links <- read_csv(f) %>%
+data_links <- read_csv(params$data_links) %>%
   filter(download)
 
 for (i in seq_len(nrow(data_links))) {
@@ -89,20 +89,8 @@ let's pick one of 63 basins in the region and visualize its glacier boundaries.
 
 ```{r}
 y <- read_sf(file.path(data_dir, "glaciers.geojson")) %>%
-  filter(Sub_basin == "Kokcha") %>%
-  filter(Latitude > 36.0, Latitude < 36.5) %>%
-  filter(Longitude > 70.8, Longitude < 71.4)
-  #filter(Sub_basin == "Dudh Koshi")
-dim(y)
-```
-
-```{r}
-x_train <- read_subset(vrt_path, st_bbox(y))
-print(dim(x_train))
-```
-
-```{r}
-writeRaster(x_train, file.path(data_dir, "LE07_152035_20060917-subset.tiff"), format = "GTiff", overwrite = TRUE)
+  filter(Sub_basin == "Dudh Koshi")
+head(y)
 ```
 
 ```{r}
@@ -127,8 +115,7 @@ below first plots the RGB colors associated with the region before showing a
 composite that turns all the glaciers blue.
 
 ```{r}
-band_names <- names(brick(vrt_path)) # vrt loses the original channel names
-x <- read_subset(vrt_path, st_bbox(y), band_names)
+x <- read_subset(vrt_path, st_bbox(y))
 ggRGB(x)
 ggRGB(x, r = 5, g = 4, b = 2)
 ```
@@ -160,7 +147,9 @@ ggplot(elevation, aes(x = x, y = y)) +
 ```
 11. Let's make a few histograms, one for each satellite sensor. From this view,
 it becomes clear that we're going to have to preprocess these data before
-modeling: The ranges across sensors can vary substantially.
+modeling. First, the ranges across sensors can vary substantially. Second, the
+BQA channels is not actually a sensor measurement -- it's a quality assignment,
+which is why it takes on so few values.
 
 ```{r}
 sample_ix <- sample(nrow(x), 100)
@@ -178,19 +167,16 @@ ggplot(x_longer) +
 another. We'll bin using `geom_hex`, because otherwise the points overlap too
 much. This visualization makes it clear how the two `B6` channels are nearly
 copies of one another, so we can safely drop one of them from our visualization.
+For reference, we also plot the first two channels, `B1` and `B2`, against one
+another.
 
 ```{r}
-ggplot(x_df, aes(x = B1, y = B2, fill = log(..count..))) +
+ggplot(x_df, aes(x = B6_VCID_1, y = B6_VCID_2, fill = log(..count..))) +
   geom_hex(binwidth = 2) +
   scale_fill_viridis_c() +
   coord_fixed()
 
 ggplot(x_df %>% filter(B1 != 255, B2 != 255), aes(x = B1, y = B2, fill = log(..count..))) +
-  geom_hex(binwidth = 2) +
-  scale_fill_viridis_c() +
-  coord_fixed()
-
-ggplot(x_df, aes(x = B6_VCID_1, y = B6_VCID_2, fill = log(..count..))) +
   geom_hex(binwidth = 2) +
   scale_fill_viridis_c() +
   coord_fixed()
