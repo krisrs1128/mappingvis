@@ -7,27 +7,16 @@ from torchvision import  transforms
 import torchvision.transforms.functional as TF
 import glob
 import random
+import shutil
 import numpy as np
 import os
 import torch
 
 
-def fetch_loaders(paths_dict, batch_size=32, shuffle=True):
-    """ Function to fetch dataLoaders for the Training / Validation
-
-    Args:
-        processed_dir(str): Directory with the processed data
-        batch_size(int): The size of each batch during training. Defaults to 32.
-
-    Return:
-        Returns train and val dataloaders
-
-    """
-    loaders = {}
-    for split, paths in paths_dict.items():
-        ds = GlacierDataset(paths["x"], paths["y"])
-        loaders[split] = DataLoader(ds, batch_size=batch_size, shuffle=shuffle)
-    return loaders
+def create_dir(p):
+    if p.exists():
+        shutil.rmtree(p)
+    p.mkdir()
 
 class Rotate:
     def __init__(self, angles):
@@ -71,19 +60,3 @@ class GlacierDataset(Dataset):
 
     def __len__(self):
         return len(self.x_paths)
-
-
-def plot_ims(x, y, N=3, channels = [2, 4, 5], rev=False):
-    for i in range(N):
-        xi = np.transpose(x[i, channels, :, :], (1, 2, 0))
-        yi = np.transpose(y[i, [1, 1, 0], :, :], (1, 2, 0))
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8, 5))
-        [axes[j].xaxis.set_visible(False) for j in [0, 1]]
-        [axes[j].yaxis.set_visible(False) for j in [0, 1]]
-        if rev:
-            axes[0].imshow(0.5 * (1 - xi))
-        else:
-            axes[0].imshow(0.5 * (1 + xi))
-
-        axes[1].imshow(yi, alpha=0.5)
-        plt.show()
