@@ -57,7 +57,7 @@ some time, because each satellite image is about 3GB.
 # index file, giving links to all the imagery
 f <- tempfile()
 download.file(params$data_links, f)
-data_links <- read.csv(f)
+data_links <- read.csv(f, stringsAsFactors = FALSE)
 
 # download all linked data
 for (i in seq_len(nrow(data_links))) {
