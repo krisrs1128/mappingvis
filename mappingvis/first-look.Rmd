@@ -47,8 +47,9 @@ header of this rmarkdown file.
 
 ```{r}
 data_dir <- params$data_dir
-dir.create(params$data_dir, recursive = TRUE)
+#dir.create(params$data_dir, recursive = TRUE)
 ```
+
 4. Next, we download the actual imagery. The data are currently stored on a UW
 Madison Box folder. We first download a file containing all the raw data
 links^[It's very meta.], and then loop over just those links. This step can take
@@ -79,7 +80,7 @@ single (very large) image.
 ```{r}
 x_paths <- dir(data_dir, "*tiff", full.names = TRUE)
 vrt_path <- file.path(data_dir, "region.vrt")
-gdalbuildvrt(x_paths, vrt_path)
+gdalbuildvrt(x_paths, vrt_path, ot="float64")
 ```
 6. Time for our first visualization! The `glaciers.geojson` file demarcates the
 boundaries for two types of glaciers that are common in the Hindu Kush Himalayas
@@ -113,21 +114,6 @@ images are not like ordinary images from a camera -- they have many sensors. In
 our case, each pixel is associated with 15 measurements. For example, the block
 below first plots the RGB colors associated with the region before showing a
 composite that turns all the glaciers blue.
-```{r}
-y <- read_sf(file.path(data_dir, "glaciers.geojson")) %>%
-  filter(Sub_basin == "Dudh Koshi")
-x <- read_subset("/Users/kris/Desktop/teaching/mapping-vis/data/raw/region.vrt", st_bbox(y))
-writeRaster(x, file.path(data_dir, "LE07_140041_20071221-subset.tiff"), format="GTiff")
-```
-```{r}
-ggRGB(x, r = 15, g = NULL, b = NULL)
-```
-
-```{r}
-x <- read_subset(vrt_path, st_bbox(y))
-ggRGB(x)
-ggRGB(x, r = 5, g = 4, b = 2)
-```
 
 9. Notice the similarities with the outlines in the `glaciers.geojson` file. We
 can more or less distinguish the clean ice and debris-covered glaciers from the rest of

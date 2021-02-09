@@ -70,7 +70,7 @@ p + coord_sf(xlim = c(70.7, 71.2),  ylim = c(36.2, 36.5))
 ```{r}
 vrt_path <- file.path(params$raw_dir, "region.vrt")
 ys <- y %>% split(.$Glaciers)
-patch <- generate_patch(vrt_path, centers[5, ])
+patch <- generate_patch(vrt_path, centers[1, ])
 patch_y <- label_mask(ys, patch$raster)
 ```
 
@@ -91,7 +91,7 @@ x_df <- patch$x[sample_ix, sample_ix, ] %>%
 
 
 ```{r}
-ggplot(x_longer) +
+ggplot(x_df) +
   geom_histogram(aes(x = value)) +
   facet_wrap(~ name, scale = "free_x")
 ```
