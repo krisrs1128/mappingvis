@@ -100,12 +100,10 @@ label_mask <- function(ys, x_raster) {
 #' @importFrom reticulate import
 #' @export
 write_patches <- function(x_path, ys, centers, out_dir) {
-  np <- import("numpy")
   unlink(out_dir, force = TRUE)
   dir.create(out_dir, recursive = TRUE)
 
   j <- 1
-  geo <- list()
   for (i in seq_len(nrow(centers))) {
     err <- function(e) { return(NA) }
     patch <- tryCatch({ generate_patch(x_path, centers[i, ]) }, error = err)
