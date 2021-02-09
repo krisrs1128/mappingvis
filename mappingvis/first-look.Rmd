@@ -22,17 +22,19 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 2. We'll be using the R packages below. `dplyr`, `ggplot2`, and `tidyr` are part
-of R's tidy data ecosystem. `gdalutils`, `RStoolbox`, `raster` and `tmap` are
-tools for spatial data manipulation and visualization.
+of R's tidy data ecosystem. `gdalutils`, `raster`, and `sf` are packages for
+general spatial data manipulation. `RStoolbox` and `tmap` give useful functions
+for spatial data visualization specifically.
 
 ```{r}
 library("RStoolbox")
 library("dplyr")
 library("gdalUtils")
 library("ggplot2")
+library("raster")
+library("sf")
 library("tidyr")
 library("tmap")
-library("raster")
 source("data.R")
 theme_set(theme_bw())
 ```
