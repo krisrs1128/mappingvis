@@ -8,10 +8,11 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  x_path: "/Users/kris/Desktop/teaching/mapping-vis/data/complete/region.vrt"
-  y_path: "/Users/kris/Desktop/teaching/mapping-vis/data/raw/Glacier_2005.shp"
-  out_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/train/"
-  basins: "/Users/kris/Desktop/teaching/mapping-vis/data/train_list.csv"
+  x_path: "/data/tiles/region.vrt"
+  y_path: "/data/vector_data/Glacier_2005.shp"
+  out_dir: "/data/processed/train/"
+  basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
+  # basins: https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv for test basins
   n_patches: 2000
 ---
 
@@ -22,24 +23,22 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r}
-library("RStoolbox")
+library("abind")
 library("dplyr")
 library("purrr")
-library("stringr")
-library("abind")
-library("sf")
-library("ggplot2")
 library("raster")
-library("gdalUtils")
+library("reticulate")
+library("sf")
+library("stringr")
 library("tidyr")
-library("tmap")
+use_condaenv("notebook")
 source("data.R")
 theme_set(theme_bw())
 ```
 
 ```{r}
 x <- brick(params$x_path)
-basins <- read.csv(params$basins)
+basins <- read_csv(params$basins)
 y <- read_sf(params$y_path) %>%
   filter(Latitude > 1) %>% # artifact
   filter(Sub_basin %in% basins$Sub_basin)
