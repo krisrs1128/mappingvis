@@ -9,7 +9,7 @@ date: "`r Sys.Date()`"
 #output: distill::distill_article
 output: pdf_document
 params:
-  data_dir: "/Users/kris/data/"
+  data_dir: "/home/jovyan/data/"
   data_links: "https://uwmadison.box.com/shared/static/khd0plylp0o2tyhxlpizjj9rz7n5czya.csv"
 ---
 
