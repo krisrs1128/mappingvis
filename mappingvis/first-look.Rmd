@@ -47,7 +47,7 @@ header of this rmarkdown file.
 
 ```{r}
 data_dir <- params$data_dir
-#dir.create(params$data_dir, recursive = TRUE)
+dir.create(params$data_dir, recursive = TRUE)
 ```
 
 4. Next, we download the actual imagery. The data are currently stored on a UW
