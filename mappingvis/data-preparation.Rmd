@@ -8,8 +8,7 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  x_path: "/data/tiles/region.vrt"
-  y_path: "/data/vector_data/Glacier_2005.shp"
+  raw_dir: "/data/raw"
   out_dir: "/data/processed/train/"
   basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
   # basins: https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv for test basins
@@ -37,11 +36,14 @@ theme_set(theme_bw())
 ```
 
 ```{r}
-x <- brick(params$x_path)
+vrt_path <- file.path(params$raw_dir, "region.vrt")
+y_path <- file.path(params$raw_dir, "glaciers.geojson")
+
+x <- brick(vrt_path)
 basins <- read_csv(params$basins)
-y <- read_sf(params$y_path) %>%
-  filter(Latitude > 1) %>% # artifact
-  filter(Sub_basin %in% basins$Sub_basin)
+y <- read_sf(y_path) %>%
+  filter(Sub_basin %in% basins$Sub_basin) %>%
+  filter(Latitude > 1) %>% # seems like missing data set to 1
 ys <- y %>%
   split(.$Glaciers)
 ```
@@ -76,3 +78,8 @@ k_mat <- k_centers %>%
   as.matrix()
 write_patches(params$x_path, ys, k_mat, params$out_dir)
 ```
+
+```{r}
+unlink(params$raw_dir, recursive = TRUE, force = TRUE)
+```
+
