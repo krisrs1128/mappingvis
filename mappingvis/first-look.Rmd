@@ -43,10 +43,8 @@ directory to which files are written by modifying the `params` block in the
 header of this rmarkdown file.
 
 ```{r}
-x_dir <- file.path(params$data_dir, "tiles")
-y_dir <- file.path(params$data_dir, "vector_data")
-dir.create(x_dir, recursive = TRUE)
-dir.create(y_dir)
+raw_dir <- file.path(params$data_dir, "raw")
+dir.create(raw_dir, recursive = TRUE)
 ```
 4. Next, we download the actual imagery. The data are currently stored on a UW
 Madison Box folder. We first download a file containing all the raw data
@@ -63,7 +61,7 @@ data_links <- read.csv(f, stringsAsFactors = FALSE)
 for (i in seq_len(nrow(data_links))) {
   download.file(
     data_links$link[i], 
-    file.path(x_dir, data_links$name[i]),
+    file.path(raw_dir, data_links$name[i]),
     method = "libcurl",
     quiet = TRUE
   )
@@ -80,8 +78,8 @@ hide all the complexity of working with many imagery files and pretend we had a
 single (very large) image.
 
 ```{r}
-x_paths <- dir(x_dir, "*tiff", full.names = TRUE)
-vrt_path <- file.path(x_dir, "region.vrt")
+x_paths <- dir(raw_dir, "*tiff", full.names = TRUE)
+vrt_path <- file.path(raw_dir, "region.vrt")
 gdalbuildvrt(x_paths, vrt_path)
 ```
 6. Time for our first visualization! The `glaciers.geojson` file demarcates the
@@ -91,7 +89,7 @@ which spans many countries, making it a bit overwhelming to visualize. Instead,
 let's pick one of 63 basins in the region and visualize its glacier boundaries.
 
 ```{r}
-y <- read_sf(file.path(y_dir, "glaciers.geojson")) %>%
+y <- read_sf(file.path(raw_dir, "glaciers.geojson")) %>%
   filter(Sub_basin == "Dudh Koshi")
 head(y)
 
