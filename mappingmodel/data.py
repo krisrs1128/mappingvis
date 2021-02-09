@@ -71,3 +71,19 @@ class GlacierDataset(Dataset):
 
     def __len__(self):
         return len(self.x_paths)
+
+
+def plot_ims(x, y, N=3, channels = [2, 4, 5], rev=False):
+    for i in range(N):
+        xi = np.transpose(x[i, channels, :, :], (1, 2, 0))
+        yi = np.transpose(y[i, [1, 1, 0], :, :], (1, 2, 0))
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8, 5))
+        [axes[j].xaxis.set_visible(False) for j in [0, 1]]
+        [axes[j].yaxis.set_visible(False) for j in [0, 1]]
+        if rev:
+            axes[0].imshow(0.5 * (1 - xi))
+        else:
+            axes[0].imshow(0.5 * (1 + xi))
+
+        axes[1].imshow(yi, alpha=0.5)
+        plt.show()
