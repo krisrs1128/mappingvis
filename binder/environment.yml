@@ -1,9 +1,5 @@
-name: mappingvis
-dependencies:
-  - python=3.8
-  - pip=20.3.3
-  - pip:
-    - addict==2.2.1
-    - numpy==1.20.0
-    - torch==1.7.0
-    - torchvision==0.8.1
+- numpy
+- addict
+- pip:
+  - torch==1.7.0
+  - torchvision==0.8.1
