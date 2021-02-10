@@ -1,7 +1,7 @@
 name: mappingvis
 dependencies: 
   - numpy
+  - addict
   - pip:
-    - addict==2.2.0
     - torch==1.7.0
     - torchvision==0.8.1
