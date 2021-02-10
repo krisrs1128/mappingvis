@@ -96,7 +96,7 @@ def log_batch(epoch, i, n, loss, batch_size):
 
 def predictions(model, ds, out_dir, device):
     create_dir(out_dir)
-    
+
     for i in range(len(ds)):
         x, y = ds[i]
         ix = re.search("[0-9]+", str(ds.x_paths[i])).group(0)

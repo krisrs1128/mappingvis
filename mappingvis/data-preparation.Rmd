@@ -9,11 +9,16 @@ date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
   raw_dir: "/Users/kris/data/raw"
-  out_dir: "/Users/kris/data/processed/train/"
-  basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
-  #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
-  n_patches: 70
+  out_dir: "/Users/kris/data/processed/test/"
+  #basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
+  basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
+  n_patches: 40
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
 
 1. In these notes, we generate and visualize patches of data that will be used
 to train the mapping model. This is necessary for a few different reasons,
@@ -27,19 +32,22 @@ into the parts of the region that actually have glaciers.
 * Image size: Even if we completed these preprocessing steps, each satellite
 image is much larger than anything a machine learning algorithm could work with.
 We'll need to break the processed imagery into pieces that can be sequentially
-streamed in for training the model^[For reference, the famous MNIST example ]
+streamed in for training the model^[For reference, the ImageNet dataset, which
+is a standard benchmark for computer vision problems, most images are usually
+cropped to 256 $\times$ 256 pixels.]
 
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-```
-
+2. We load quite a few libraries for this step. Many will be familiar from the
+previous notes, but two new ones are `abind`, which is used to manipulate
+subsetted arrays of imagery, and `reticulate`, which is used to navigate back
+and forth between R and python. We need `reticulate` because we will save our
+final dataset as a collection of `.npy` numpy files -- these are a convenient
+format for training our mapping model, which is written in python.
 
 ```{r}
+library("RStoolbox")
 library("abind")
 library("dplyr")
 library("gdalUtils")
-library("RStoolbox")
 library("ggplot2")
 library("purrr")
 library("raster")
@@ -48,12 +56,22 @@ library("reticulate")
 library("sf")
 library("stringr")
 library("tidyr")
+
+# setting up python environment
 use_condaenv("notebook")
 np <- import("numpy")
 source("data.R")
 theme_set(theme_bw())
 set.seed(123)
 ```
+3. We want to make sure we don't overfit our model. To this end, we'll use
+different geographic sub-basins for training and evaluation. The list of
+training basins was chosen in advance and placed in [this
+file](https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv),
+which is used in the filtering step below. An analogous list for the test data
+is
+[here](https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv)
+and can be used by modifying this rmarkdown's header, in the `basins` parameter.
 
 ```{r}
 y_path <- file.path(params$raw_dir, "glaciers.geojson")
@@ -62,6 +80,13 @@ basins <- read_csv(params$basins)
 y <- read_sf(y_path) %>%
   filter(Sub_basin %in% basins$Sub_basin)
 ```
+4. To address the imbalance and image size issues, we'll sample locations
+randomly from within the current basins' glaciers. This is done using the
+`st_sample` function. More patches will translate into more patches for training
+the model, but it will also increase the chance that training patches overlap.
+You will see a warning message about `st_intersection` -- it's safe to ignore
+that for our purpose (we are ignoring the fact that the surface of the earth is
+slightly curved).
 
 ```{r}
 centers <- y %>%
@@ -69,6 +94,12 @@ centers <- y %>%
   st_coordinates()
 colnames(centers) <- c("Longitude", "Latitude")
 ```
+5. To better understand this sampling procedure, let's visualize the centers of
+the sampled locations on top of the basins that are available for training. We
+can see that we have more samples in areas that have higher glacier density,
+which helps alleviate the imbalance problem. As an aside, this visualization
+gives an example of visualizing a spatial geometry (the glaciers object, `y`)
+together with an ordinary data frame (the `centers` for sampling).
 
 ```{r}
 p <- ggplot(y, aes(x = Longitude, y = Latitude)) +
@@ -78,10 +109,20 @@ p <- ggplot(y, aes(x = Longitude, y = Latitude)) +
 
 p
 ```
+6. That image is quite zoomed out. To see some of the sampling locations along
+with just a few glaciers, we can zoom in, using the `coord_sf` modifier.
 
 ```{r}
 p + coord_sf(xlim = c(70.7, 71.2),  ylim = c(36.2, 36.5))
 ```
+9. Now that we know where we want to sample our training imagery, let's extract
+a patch. This is hidden away in `generate_patch` in the `data.R` script
+accompanying this notebook. This function also does all the preprocessing that
+we mentioned in the introduction. We'll see the effect of this preprocessing in
+a minute -- for now, let's just run the patch extraction code. Note that we
+simultaneously extract a corresponding label, stored in `patch_y`. It's these
+preprocessed satellite imagery - glacier label pairs that we'll be showing to
+our model in order to train it.
 
 ```{r}
 vrt_path <- file.path(params$raw_dir, "region.vrt")
@@ -89,6 +130,12 @@ ys <- y %>% split(.$Glaciers)
 patch <- generate_patch(vrt_path, centers[1, ])
 patch_y <- label_mask(ys, patch$raster)
 ```
+10. Let's take a look at the preprocessed patches, just as a sanity check. We're
+plotting the first of the sampled patches below. The image is much smaller now,
+but still contains a fair amount of glacier. Notice the false negative
+debris-covered glacier along the top of the image! A more sophisticated model
+would account for these kinds of data-specific variations, which become obvious
+when you visualize the data, but which are otherwise very hard to recognize.
 
 ```{r}
 ggRGB(brick(patch$x), r = 5, g = 4, b = 2)
@@ -96,21 +143,33 @@ ggRGB(brick(patch$x), r = 13, g = 13, b = 13)
 ggRGB(brick(patch_y), r = NULL)
 ```
 
+11. The other major change in these preprocessed images is that we've applied a
+quantile transform to each channel, mapping the sensor measurements to between
+$\left[-1, 1\right]$ for every image. We're using the same histogram code that
+we used in the first notebook.
+
 ```{r}
-# same code as before, for making a histogram
 sample_ix <- sample(nrow(patch$x), 250)
 x_df <- patch$x[sample_ix, sample_ix, ] %>%
   brick() %>%
   as.data.frame() %>%
   pivot_longer(cols = everything())
-```
 
-
-```{r}
 ggplot(x_df) +
   geom_histogram(aes(x = value)) +
   facet_wrap(~ name, scale = "free_x")
 ```
+
+12. Now that we've checked one of the patches, we can write them all to numpy
+arrays. Even after subsetting to only one basin, this step takes a fair bit of
+time, so we'll instead just refer to
+[training](https://uwmadison.box.com/shared/static/d54agxzb5g8ivr7hkac8nygqd6nrgrqr.gz)
+and test patches that I generated earlier. We'll be downloading them at the
+start of the next notebook, which uses these data to train a mapping model. If
+you're curious, we've also generated patches using a large list of training
+basins, available here. Using this larger dataset leads to a noticeably better
+model, but makes for an unwieldy tutorial. Nonetheless, the data are available
+for your experimentation after the workshop.
 
 ```{r}
 #write_patches(vrt_path, ys, centers, params$out_dir)
