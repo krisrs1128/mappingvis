@@ -65,13 +65,13 @@ theme_set(theme_bw())
 set.seed(123)
 ```
 3. We want to make sure we don't overfit our model. To this end, we'll use
-different geographic sub-basins for training and evaluation. The list of
-training basins was chosen in advance and placed in [this
-file](https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv),
-which is used in the filtering step below. An analogous list for the test data
-is
-[here](https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv)
-and can be used by modifying this rmarkdown's header, in the `basins` parameter.
+different geographic sub-basins for training and evaluation. For training, we're
+just using the `Kokcha` basin, and for evaluation, we use `Dudh Koshi`. In
+general, our notebook takes arbitrary lists of basins, specified by links to csv
+files through the `basins` parameter in the header. A [larger
+list](https://uwmadison.box.com/shared/static/up5859yw686v5pcnjcq2xik8v4c69ka3.csv)
+of training basins was used to train a model we'll see soon, but it takes much
+longer to preprocess, and would be a hassle even just to download.
 
 ```{r}
 y_path <- file.path(params$raw_dir, "glaciers.geojson")
