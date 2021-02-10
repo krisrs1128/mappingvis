@@ -72,7 +72,7 @@ for (i in seq_along(y_hat_paths)) {
 metrics <- bind_rows(metrics)
 ```
 
-```{r}
+```{r, fig.width = 8}
 ggplot(metrics, aes(x = threshold, y = precision)) +
   geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
   facet_wrap(~ class)
@@ -92,15 +92,15 @@ avg_metrics <- metrics %>%
 avg_metrics
 ```
 
-```{r}
-i <- 28
+```{r, fig.width = 5}
+i <- 34
 y_hat <- load_npy(y_hat_paths[i])
 y <- load_npy(str_replace(y_hat_paths[i], "y_hat", "y"))
 x <- load_npy(str_replace(y_hat_paths[i], "y_hat", "x"))
 
-ggRGB(subset(-x, c(5, 4, 2)))
-ggRGB(-y_hat, r = 2, g = 1, b = 1)
-ggRGB(-y, r = 2, g = 1, b = 1)
+ggRGB(subset(-x, c(5, 4, 2))) +scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))+ theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank())
+ggRGB(y_hat, r = NULL) +scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))+ theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank())
+ggRGB(y, r = NULL) +scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))+ theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank())
 ```
 
 ```{r}

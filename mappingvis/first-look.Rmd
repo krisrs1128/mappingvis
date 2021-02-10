@@ -6,8 +6,7 @@ author:
   - name: Kris Sankaran
     affiliation: UW Madison
 date: "`r Sys.Date()`"
-#output: distill::distill_article
-output: pdf_document
+output: distill::distill_article
 params:
   data_dir: "/Users/kris/data/raw/"
   data_links: "https://uwmadison.box.com/shared/static/khd0plylp0o2tyhxlpizjj9rz7n5czya.csv"
@@ -23,8 +22,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 2. We'll be using the R packages below. `dplyr`, `ggplot2`, and `tidyr` are part
 of R's tidy data ecosystem. `gdalutils`, `raster`, and `sf` are packages for
-general spatial data manipulation. `RStoolbox` and `tmap` give useful functions
-for spatial data visualization specifically.
+general spatial data manipulation. `RStoolbox` gives useful functions for
+spatial data visualization specifically.
 
 ```{r}
 library("RStoolbox")
@@ -35,7 +34,6 @@ library("raster")
 library("readr")
 library("sf")
 library("tidyr")
-library("tmap")
 source("data.R")
 theme_set(theme_bw())
 ```
@@ -53,7 +51,7 @@ dir.create(params$data_dir, recursive = TRUE)
 4. Next, we download the actual imagery. The data are currently stored on a UW
 Madison Box folder. We first download a file containing all the raw data
 links^[It's very meta.], and then loop over just those links. This step can take
-some time, because each satellite image is about 3GB.
+some time, because the files are relatively large.
 
 ```{r, eval = FALSE}
 # download all linked data
@@ -82,6 +80,7 @@ x_paths <- dir(data_dir, "*tiff", full.names = TRUE)
 vrt_path <- file.path(data_dir, "region.vrt")
 gdalbuildvrt(x_paths, vrt_path, ot="float64")
 ```
+
 6. Time for our first visualization! The `glaciers.geojson` file demarcates the
 boundaries for two types of glaciers that are common in the Hindu Kush Himalayas
 region. The full dataset gives coordinates for glaciers across the whole region,
@@ -90,13 +89,16 @@ let's pick one of 63 basins in the region and visualize its glacier boundaries.
 
 ```{r}
 y <- read_sf(file.path(data_dir, "glaciers.geojson")) %>%
-  filter(Sub_basin == "Dudh Koshi")
+  filter(Sub_basin == "Kokcha")
 head(y)
 ```
 
-```{r}
-tm_shape(y) +
-  tm_fill(col = "Glaciers", palette = c("#93b9c3", "#4e326a"))
+```{r, fig.height = 7}
+ggplot(y, aes(fill = Glaciers)) +
+  geom_sf() +
+  scale_fill_manual(values = c("#93b9c3", "#4e326a")) +
+  coord_sf(xlim = c(70.8, 71.2), ylim = c(36.1, 36.5)) +
+  theme(legend.position = "bottom")
 ```
 
 7. From a technical perspective, there are two points worth noting. First, we
@@ -115,6 +117,12 @@ our case, each pixel is associated with 15 measurements. For example, the block
 below first plots the RGB colors associated with the region before showing a
 composite that turns all the glaciers blue.
 
+```{r}
+x <- read_subset(vrt_path, st_bbox(y))
+ggRGB(x)
+ggRGB(x, r = 5, g = 4, b = 2)
+```
+
 9. Notice the similarities with the outlines in the `glaciers.geojson` file. We
 can more or less distinguish the clean ice and debris-covered glaciers from the rest of
 the image. Looking a bit more carefully, though, we realize that there are lots
@@ -125,21 +133,23 @@ Also, it seems like the debris-covered glaciers are only a subtley different
 color from the background -- their tendril-like shape is a much better visual
 clue.
 
-10. We've managed to use `tm_shape` and `ggRGB` to avoid having to convert the
+10. We've managed to use `geom_sf` and `ggRGB` to avoid having to convert the
 raw data to standard R data frames. There are some situations, however, when it
 can be useful to make that conversion. The code below provides an example that
 extracts the slope channel from the satellite image and visualizes it using
 standard ggplot2. It seems like the debris-covered glaciers are relatively flat.
 
-```{r}
+```{r, fig.height=5, fig.width=5}
 slope <- as.data.frame(x, xy = TRUE) %>%
   dplyr::select(x, y, slope)
 
 ggplot(slope, aes(x = x, y = y)) +
   geom_raster(aes(fill = slope)) +
   scale_fill_gradient(low = "white", high = "black") +
-  coord_fixed()
+  coord_fixed() +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
 ```
+
 11. Let's make a few histograms, one for each satellite sensor. From this view,
 it becomes clear that we're going to have to preprocess these data before
 modeling. First, the ranges across sensors can vary substantially. Second, the

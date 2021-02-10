@@ -9,10 +9,10 @@ date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
   raw_dir: "/Users/kris/data/raw"
-  out_dir: "/Users/kris/data/processed/test/"
-  #basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
-  basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
-  n_patches: 40
+  out_dir: "/Users/kris/data/processed/train/"
+  basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
+  #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
+  n_patches: 75
 ---
 
 ```{r setup, include=FALSE}
@@ -64,6 +64,7 @@ source("data.R")
 theme_set(theme_bw())
 set.seed(123)
 ```
+
 3. We want to make sure we don't overfit our model. To this end, we'll use
 different geographic sub-basins for training and evaluation. For training, we're
 just using the `Kokcha` basin, and for evaluation, we use `Dudh Koshi`. In
@@ -127,9 +128,8 @@ our model in order to train it.
 ```{r}
 vrt_path <- file.path(params$raw_dir, "region.vrt")
 ys <- y %>% split(.$Glaciers)
-patch <- generate_patch(vrt_path, centers[1, ])
-patch_y <- label_mask(ys, patch$raster)
 ```
+
 10. Let's take a look at the preprocessed patches, just as a sanity check. We're
 plotting the first of the sampled patches below. The image is much smaller now,
 but still contains a fair amount of glacier. Notice the false negative
@@ -137,7 +137,9 @@ debris-covered glacier along the top of the image! A more sophisticated model
 would account for these kinds of data-specific variations, which become obvious
 when you visualize the data, but which are otherwise very hard to recognize.
 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
+patch <- generate_patch(vrt_path, centers[5, ])
+patch_y <- label_mask(ys, patch$raster)
 ggRGB(brick(patch$x), r = 5, g = 4, b = 2)
 ggRGB(brick(patch$x), r = 13, g = 13, b = 13)
 ggRGB(brick(patch_y), r = NULL)
