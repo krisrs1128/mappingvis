@@ -175,8 +175,5 @@ for your experimentation after the workshop.
 
 ```{r}
 #write_patches(vrt_path, ys, centers, params$out_dir)
-```
-
-```{r}
 unlink(params$raw)
 ```
