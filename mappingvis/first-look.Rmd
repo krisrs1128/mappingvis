@@ -17,7 +17,7 @@ the raw annotations and images, using visualization to gain familiarity with the
 structure of the problem.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 2. We'll be using the R packages below. `dplyr`, `ggplot2`, and `tidyr` are part
@@ -89,7 +89,7 @@ let's pick one of 63 basins in the region and visualize its glacier boundaries.
 
 ```{r}
 y <- read_sf(file.path(data_dir, "glaciers.geojson")) %>%
-  filter(Sub_basin == "Kokcha")
+  filter(Sub_basin == "Dudh Koshi")
 head(y)
 ```
 

@@ -16,6 +16,10 @@ params:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+1. In these notes, we'll visualize some of the predictions from our trained
+model. Our focus is on the form and quality of the predictions, rather than the
+mechanics of the training process itself.
+
 ```{r}
 library("RStoolbox")
 library("dplyr")
