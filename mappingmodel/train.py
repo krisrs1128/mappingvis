@@ -9,6 +9,7 @@ import re
 import numpy as np
 import torch
 import torch.nn.functional as F
+from data import create_dir
 
 def l2_reg(params, device):
     penalty = torch.tensor(0.0).to(device)
@@ -104,6 +105,6 @@ def predictions(model, ds, out_dir, device):
 
         with torch.no_grad():
             y_hat = model(x.unsqueeze(0).to(device))
-            np.save(out_dir / f"y_hat-{i}.npy", y_hat.cpu()[0])
-            np.save(out_dir / f"y-{i}.npy", y)
-            np.save(out_dir / f"x-{i}.npy", x)
+            np.save(out_dir / f"y_hat-{ix}.npy", y_hat.cpu()[0])
+            np.save(out_dir / f"y-{ix}.npy", y)
+            np.save(out_dir / f"x-{ix}.npy", x)

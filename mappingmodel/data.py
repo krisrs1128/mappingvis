@@ -4,19 +4,30 @@ Custom Dataset for Training
 #!/usr/bin/env python
 from torch.utils.data import Dataset, DataLoader
 from torchvision import  transforms
-import torchvision.transforms.functional as TF
 import glob
-import random
-import shutil
 import numpy as np
 import os
+import random
+import shutil
+import tarfile
 import torch
+import torchvision.transforms.functional as TF
+import urllib.request
 
 
 def create_dir(p):
     if p.exists():
         shutil.rmtree(p)
     p.mkdir(parents=True)
+
+
+def download_data(link, p, unzip=True):
+  urllib.request.urlretrieve(link, p)
+  if unzip:
+    tar = tarfile.open(p)
+    tar.extractall(p.parent)
+    tar.close()
+
 
 class Rotate:
     def __init__(self, angles):
