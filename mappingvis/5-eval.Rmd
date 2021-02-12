@@ -8,8 +8,8 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  preds_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/preds/"
-  geo_dir: "/Users/kris/Desktop/teaching/mapping-vis/data/processed/"
+  preds_dir: "/Users/kris/data/predictions/train"
+  geo_dir: "/Users/kris/data/processed"
 ---
 
 ```{r setup, include=FALSE}
@@ -32,7 +32,7 @@ library("tidyr")
 library("tmap")
 source("data.R")
 np <- reticulate::import("numpy")
-theme_set(theme_bw())
+theme_set(theme_minimal())
 ```
 
 ```{r}
@@ -87,9 +87,8 @@ ggplot(metrics, aes(x = threshold, y = recall)) +
 ```
 ```{r}
 avg_metrics <- metrics %>%
-  filter(threshold == 0.2) %>%
   group_by(i, class) %>%
-  summarise(avg_precision = mean(precision), avg_recall = mean(recall)) %>%
+  summarise(avg_precision = mean(precision, na.rm = TRUE), avg_recall = mean(recall, na.rm = TRUE)) %>%
   arrange(class, desc(avg_precision), desc(avg_recall))
 ```
 ```{r}
@@ -97,14 +96,15 @@ avg_metrics
 ```
 
 ```{r, fig.width = 5}
-i <- 34
+i <- 4
 y_hat <- load_npy(y_hat_paths[i])
 y <- load_npy(str_replace(y_hat_paths[i], "y_hat", "y"))
 x <- load_npy(str_replace(y_hat_paths[i], "y_hat", "x"))
 
-ggRGB(subset(-x, c(5, 4, 2))) +scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))+ theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank())
-ggRGB(y_hat, r = NULL) +scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))+ theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank())
-ggRGB(y, r = NULL) +scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))+ theme(axis.ticks = element_blank(), axis.text = element_blank(), axis.title = element_blank())
+ggRGB(subset(x, c(5, 4, 2)))
+ggRGB(subset(x, c(13, 13, 13)))
+ggRGB(y_hat, r = NULL)
+ggRGB(y, r = NULL)
 ```
 
 ```{r}

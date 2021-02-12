@@ -53,7 +53,7 @@ Madison Box folder. We first download a file containing all the raw data
 links^[It's very meta.], and then loop over just those links. This step can take
 some time, because the files are relatively large.
 
-```{r, eval = FALSE}
+```{r}
 # download all linked data
 data_links <- read_csv(params$data_links) %>%
   filter(download)
