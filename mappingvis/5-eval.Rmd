@@ -1,5 +1,5 @@
 ---
-title: "Analyzing Predictions"
+title: "Model Evaluation"
 description: |
     Studying saved predictions from a model.
 author:
@@ -8,119 +8,176 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  preds_dir: "/Users/kris/data/predictions/train"
-  geo_dir: "/Users/kris/data/processed"
+  preds_dir: "/Users/kris/data/predictions/"
+  geo_dir: "/Users/kris/data/processed/"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 ```
 
 1. In these notes, we'll visualize some of the predictions from our trained
-model. Our focus is on the form and quality of the predictions, rather than the
-mechanics of the training process itself.
+model. This will help us develop a more nuanced understanding of model quality,
+rather than average test set error alone. Indeed, while training and test errors
+are useful for diagnosing whether a model is over or underfitting a dataset,
+they alone don't tell us when a model is most likely to make mistakes.
+
+2. As usual, our first step is to load libraries that will be useful in this
+analysis. By this point, we have seen most of this mix of spatial and tidy data
+analysis packages. We use the `reticulate` package to read the raw predictions,
+which were saved as `numpy` arrays, into R arrays.
 
 ```{r}
 library("RStoolbox")
+library("raster")
 library("dplyr")
 library("ggplot2")
-library("raster")
+library("gridExtra")
+library("purrr")
 library("reticulate")
 library("sf")
 library("stringr")
 library("tidyr")
-library("tmap")
-source("data.R")
+use_condaenv("notebook")
 np <- reticulate::import("numpy")
+source("data.R")
+source("metrics.R")
 theme_set(theme_minimal())
 ```
 
+3. We will download predictions that would have been saved by the
+`save_preds.ipynb` script, if we had let it run for a few more minutes. The
+download still takes time (the file is a little over 700MB), but it is still
+faster than waiting for the predictions to be saved.
+
 ```{r}
-precision_recall_curve <- function(y, y_hat, n_thresh=25, low=0.1, high=0.7) {
-  p_thresh <- seq(low, high, length.out = n_thresh)
-  metrics <- tibble(
-    threshold = p_thresh,
-    precision = rep(0, n_thresh),
-    recall = rep(0, n_thresh)
+preds_dir <- params$preds_dir
+#dir.create(preds_dir)
+#preds_file <- file.path(preds_dir, "preds.tar.gz")
+#download.file("https://uwmadison.box.com/shared/static/5s7sqvh50iy5p2yl2basfdzgss9lgnxr.gz", preds_file)
+#untar(preds_file, exdir = params$preds_dir)
+#unlink(preds_file)
+```
+
+4. The downloaded data include more than the predictions `y_hat` -- they also
+include the saved patches `x` and ground truth labels `y`. We have this for both
+training and test regions. To manage all these different files, let's create a
+data frame that helps keep track of which types of files are where.
+
+```{r}
+paths <- prediction_paths(preds_dir)
+head(paths)
+```
+5. How good are the predictions? Our setting is a little trickier than the usual
+regression or classification settings. This is because (i) for each sample, we
+make predictions at every single pixel and (ii) we have several classes of
+interest. For (i), the idea is to evaluate the precision and recall associated
+with the entire patch as we vary the thresholds used to demarcate classes. See
+the next point. For (ii), we make sure to compute these precision and recall
+statistics for every single class.
+
+6. To illustrate (i) from the previous point, consider the two images below,
+giving the ground truth and predicted probabilities for the clean-ice glacier
+class, for one patch.
+
+```{r}
+y <- load_npy(paths$path[2])
+y_hat <- load_npy(paths$path[3])
+p <- list(
+  plot_rgb(y, 1, r = NULL, g = NULL, b = 1),
+  plot_rgb(y_hat, 1, r = NULL, g = NULL, b = 1)
+)
+grid.arrange(grobs = p, ncol = 2)
+```
+
+To assign a class to every pixel, we would need to declare probability
+thresholds, above which the pixel belongs to the target class (e.g., clean ice
+glacier) and below which it is considered background. The for loop below varies
+the threshold, going from lenient (high glacier recall, but low precision) to
+strict (low glacier recall, but high precision).
+
+```{r, animation.hook="gifski", interval = 0.02}
+thresholds <- c(seq(0.05, 0.95, 0.01), rep(0.95, 10))
+for (i in seq_along(thresholds)) {
+  print(plot_rgb(y_hat > thresholds[i], 1, r = NULL, g = NULL, b = 1))
+}
+```
+
+7. The block below computes precision and recall across a range of thresholds,
+for each sample in the training and test splits. This generates new diagnostic
+data at the level of individual samples, allowing us to make more fine-grained
+assessments of where the model does and does not perform well.
+
+```{r}
+metrics <- paths %>%
+  split(.$split) %>%
+  map(~ metrics_fun(.)) %>%
+  bind_rows(.id = "split")
+head(metrics)
+```
+
+8. The block below plots the metrics across samples. Each line corresponds to
+one <span style="color: #fc8d62;">training</span> or <span style="color:
+#66c2a5;">test</span> sample for a given class. The three classes are arranged
+in the separate columns -- from left to right, they are clean-ice,
+debris-covered, and background class. No one threshold seems to stand out, with
+precision and recall curves varying smoothly across thresholds.
+
+9. Performance on the debris-covered glaciers is noticeably worse than on the
+clean-ice ones. A few examples from each class are uniformly easier than others,
+but generally, the samples within a given class have comparable difficulty with
+one another.
+
+10. It seems like we've overfit on the clean-ice glaciers, but underfit on the
+debris-covered ones. We can tell this because performance on training samples is
+noticeably better than for test samples for the clean-ice examples, but not for
+the debris-covered glaciers. In a future run, it might be worth rebalancing the
+data so that debris-covered glaciers are more common.
+
+```{r, layout="l-body-outset"}
+metrics_ <- metrics %>%
+  pivot_longer(precision:recall, names_to = "metric")
+
+ggplot(metrics_, aes(x = threshold, y = value, col = split)) +
+  geom_line(aes(group = path), size = 0.5, alpha = 0.6) +
+  guides(col = guide_legend(override.aes = list(size = 5, alpha = 1))) +
+  scale_color_brewer(palette = "Set2") +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  facet_grid(metric ~ class) +
+  theme(
+    legend.position = "bottom",
+    panel.border = element_rect(fill = "NA", size = .5)
   )
-  
-  for (i in seq_len(n_thresh)) {
-    y_ <- as.numeric(y_hat > p_thresh[i])
-    intersection <- sum(y * y_)
-    
-    metrics$precision[i] <- intersection / sum(y_)
-    metrics$recall[i] <- intersection / sum(y)
-  }
-  
-  metrics
-}
 ```
+
+12. Let's visualize a few samples that have especially good and bad predictions.
+To identify them, we compute the average precision and recall across all tested
+thresholds and then sort samples from best to worst.
 
 ```{r}
-y_hat_paths <- dir(params$preds_dir, "^y_hat-*", full = TRUE)
-metrics <- vector(mode = "list", length = 3 * length(y_hat_paths))
-
-ix <- 1
-for (i in seq_along(y_hat_paths)) {
-  y_hat <- np$load(y_hat_paths[i])
-  y_path <- str_replace(y_hat_paths[i], "y_hat", "y")
-  y <- np$load(y_path)
-  for (k in seq_len(nrow(y))) {
-    metrics[[ix]] <- precision_recall_curve(y[k,,], y_hat[k,,]) 
-    metrics[[ix]]$class <- k
-    metrics[[ix]]$i <- i
-    ix <- ix + 1
-  }
-}
-
-metrics <- bind_rows(metrics)
+metrics_ %>%
+  group_by(metric, path, class) %>%
+  summarise(mean = mean(value, na.rm = TRUE)) %>%
+  arrange(class, metric, desc(mean))
 ```
 
-```{r, fig.width = 8}
-ggplot(metrics, aes(x = threshold, y = precision)) +
-  geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
-  facet_wrap(~ class)
+13. It seems like sample 11 in the test split is one of the better ones. How
+does it look like? The block pulls the paths for `x`, `y`, and `y_hat` for this
+example and visualizes them. Try fiddling with the `ix` and `split` parameters
+to look at a few different examples.
 
-ggplot(metrics, aes(x = threshold, y = recall)) +
-  geom_line(aes(group = i), size = 0.9, alpha = 0.6) +
-  facet_wrap(~ class)
-```
-```{r}
-avg_metrics <- metrics %>%
-  group_by(i, class) %>%
-  summarise(avg_precision = mean(precision, na.rm = TRUE), avg_recall = mean(recall, na.rm = TRUE)) %>%
-  arrange(class, desc(avg_precision), desc(avg_recall))
-```
-```{r}
-avg_metrics
-```
+```{r, layout="l-body-outset"}
+ims <- paths %>%
+  filter(ix == 11, split == "test") %>% # what about 16 train? 4 test?
+  split(.$type) %>%
+  map(~ load_npy(.$path[1]))
 
-```{r, fig.width = 5}
-i <- 4
-y_hat <- load_npy(y_hat_paths[i])
-y <- load_npy(str_replace(y_hat_paths[i], "y_hat", "y"))
-x <- load_npy(str_replace(y_hat_paths[i], "y_hat", "x"))
-
-ggRGB(subset(x, c(5, 4, 2)))
-ggRGB(subset(x, c(13, 13, 13)))
-ggRGB(y_hat, r = NULL)
-ggRGB(y, r = NULL)
-```
-
-```{r}
-y_df <- raster(y[2,,]) %>%
-  as.data.frame(xy = TRUE) %>%
-  rename("truth" = "layer")
-
-y_hat_df <- raster(y_hat[2,,]) %>%
-  as.data.frame(xy = TRUE) %>%
-  rename("pred" = "layer")
-```
-
-```{r}
-y_df <- y_df %>%
-  left_join(y_hat_df)
-ggplot(y_df) +
-  geom_histogram(aes(x = pred), binwidth = 0.005) +
-  facet_grid(truth ~ ., scale = "free_y")
+p <- list(
+  plot_rgb(ims[["x"]], c(5, 4, 2)),
+  plot_rgb(ims[["x"]], c(13, 13, 13)),
+  plot_rgb(ims[["y_hat"]], r = NULL),
+  plot_rgb(ims[["y"]], r = NULL)
+)
+grid.arrange(grobs = p, ncol = 2)
 ```

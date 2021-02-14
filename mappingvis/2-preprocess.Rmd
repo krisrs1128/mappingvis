@@ -9,14 +9,14 @@ date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
   raw_dir: "/Users/kris/data/raw"
-  out_dir: "/Users/kris/data/processed/train/"
+  out_dir: "/Users/kris/data/processed/train"
   basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
   #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
   n_patches: 75
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
@@ -61,7 +61,7 @@ library("tidyr")
 use_condaenv("notebook")
 np <- import("numpy")
 source("data.R")
-theme_set(theme_bw())
+theme_set(theme_minimal())
 set.seed(123)
 ```
 
@@ -81,6 +81,7 @@ basins <- read_csv(params$basins)
 y <- read_sf(y_path) %>%
   filter(Sub_basin %in% basins$Sub_basin)
 ```
+
 4. To address the imbalance and image size issues, we'll sample locations
 randomly from within the current basins' glaciers. This is done using the
 `st_sample` function. More patches will translate into more patches for training
@@ -95,6 +96,7 @@ centers <- y %>%
   st_coordinates()
 colnames(centers) <- c("Longitude", "Latitude")
 ```
+
 5. To better understand this sampling procedure, let's visualize the centers of
 the sampled locations on top of the basins that are available for training. We
 can see that we have more samples in areas that have higher glacier density,
@@ -116,6 +118,7 @@ with just a few glaciers, we can zoom in, using the `coord_sf` modifier.
 ```{r}
 p + coord_sf(xlim = c(70.7, 71.2),  ylim = c(36.2, 36.5))
 ```
+
 9. Now that we know where we want to sample our training imagery, let's extract
 a patch. This is hidden away in `generate_patch` in the `data.R` script
 accompanying this notebook. This function also does all the preprocessing that
@@ -137,18 +140,21 @@ debris-covered glacier along the top of the image! A more sophisticated model
 would account for these kinds of data-specific variations, which become obvious
 when you visualize the data, but which are otherwise very hard to recognize.
 
-```{r, fig.width = 5, fig.height = 5}
+```{r, layout="l-body-outset"}
 patch <- generate_patch(vrt_path, centers[5, ])
 patch_y <- label_mask(ys, patch$raster)
-ggRGB(brick(patch$x), r = 5, g = 4, b = 2)
-ggRGB(brick(patch$x), r = 13, g = 13, b = 13)
-ggRGB(brick(patch_y), r = NULL)
+p <- list(
+  plot_rgb(brick(patch$x), c(5, 4, 2), r = 1, g = 2, b = 3),
+  plot_rgb(brick(patch$x), rep(13, 3)),
+  plot_rgb(brick(patch_y), r = NULL)
+)
+grid.arrange(grobs = p, ncol = 3)
 ```
 
 11. The other major change in these preprocessed images is that we've applied a
-quantile transform to each channel, mapping the sensor measurements to between
-$\left[-1, 1\right]$ for every image. We're using the same histogram code that
-we used in the first notebook.
+linear transformation to each channel, mapping the sensor measurements to
+between $\left[-1, 1\right]$ for every image. We're using the same histogram
+code that we used in the first notebook.
 
 ```{r}
 sample_ix <- sample(nrow(patch$x), 250)
@@ -174,6 +180,6 @@ model, but makes for an unwieldy tutorial. Nonetheless, the data are available
 for your experimentation after the workshop.
 
 ```{r}
-#write_patches(vrt_path, ys, centers, params$out_dir)
-unlink(params$raw, recursive = TRUE)
+write_patches(vrt_path, ys, centers, params$out_dir)
+#unlink(params$raw, recursive = TRUE)
 ```
