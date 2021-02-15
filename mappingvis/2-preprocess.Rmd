@@ -18,6 +18,7 @@ params:
 ---
 
 ```{r setup, include=FALSE}
+rm(list=setdiff(ls(), "params"))
 knitr::opts_chunk$set(echo = TRUE, cache = FALSE, message = FALSE, warning = FALSE)
 ```
 
