@@ -176,7 +176,7 @@ ims <- paths %>%
   map(~ load_npy(.$path[1]))
 
 p <- list(
-  plot_rgb(ims[["x"]], c(5, 4, 2)),
+  plot_rgb(ims[["x"]], c(5, 4, 2), r = 1, g = 2, b = 3),
   plot_rgb(ims[["x"]], c(13, 13, 13)),
   plot_rgb(ims[["y_hat"]], r = NULL),
   plot_rgb(ims[["y"]], r = NULL)
