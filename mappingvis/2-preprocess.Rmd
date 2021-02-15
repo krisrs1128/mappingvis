@@ -161,7 +161,7 @@ between $\left[-1, 1\right]$ for every image. We're using the same histogram
 code that we used in the first notebook.
 
 ```{r}
-sample_ix <- sample(nrow(patch$x), 250)
+sample_ix <- sample(nrow(patch$x), 25)
 x_df <- patch$x[sample_ix, sample_ix, ] %>%
   brick() %>%
   as.data.frame() %>%

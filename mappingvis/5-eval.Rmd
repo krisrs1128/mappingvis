@@ -10,6 +10,8 @@ output: distill::distill_article
 params:
   preds_dir: "/home/jovyan/data/predictions/"
   geo_dir: "/home/jovyan/data/processed/"
+  #preds_dir: "/Users/kris/data/predictions/"
+  #geo_dir: "/Users/kris/data/processed/"
 ---
 
 ```{r setup, include=FALSE}
@@ -52,11 +54,11 @@ faster than waiting for the predictions to be saved.
 
 ```{r}
 preds_dir <- params$preds_dir
-#dir.create(preds_dir)
-#preds_file <- file.path(preds_dir, "preds.tar.gz")
-#download.file("https://uwmadison.box.com/shared/static/5s7sqvh50iy5p2yl2basfdzgss9lgnxr.gz", preds_file)
-#untar(preds_file, exdir = params$preds_dir)
-#unlink(preds_file)
+dir.create(preds_dir)
+preds_file <- file.path(preds_dir, "preds.tar.gz")
+download.file("https://uwmadison.box.com/shared/static/5s7sqvh50iy5p2yl2basfdzgss9lgnxr.gz", preds_file)
+untar(preds_file, exdir = params$preds_dir)
+unlink(preds_file)
 ```
 
 4. The downloaded data include more than the predictions `y_hat` -- they also
