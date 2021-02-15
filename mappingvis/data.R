@@ -7,8 +7,6 @@ normalize_input <- function(x, ...) {
 
     for (l in seq_len(n_layers)) {
         cur_layer <- x[,, l]
-        cur_layer <- cur_layer - min(cur_layer)
-        cur_layer <- cur_layer / max(cur_layer)
         result[,, l] <- EBImage::normalize(cur_layer, ...)
     }
 
