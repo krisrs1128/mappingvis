@@ -22,6 +22,9 @@ def create_dir(p):
 
 
 def download_data(link, p, unzip=True):
+  if not p.parent.exists():
+      p.mkdir(parents=True)
+
   urllib.request.urlretrieve(link, p)
   if unzip:
     tar = tarfile.open(p)
