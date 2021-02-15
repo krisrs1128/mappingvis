@@ -55,7 +55,7 @@ docker shell> mkdir -p /home/test/.rstudio/graphics-r3
 docker shell> sudo chown -R test /home/test/.rstudio/
 ```
 
-Then, we can copy over the contents of this repo to the new `kris` user and
+Then, we can copy over the contents of this repo to the new `test` user and
 start Rstudio,
 
 ```

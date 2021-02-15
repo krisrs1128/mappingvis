@@ -167,7 +167,7 @@ BQA channels is not actually a sensor measurement -- it's a quality assignment,
 which is why it takes on so few values.
 
 ```{r}
-sample_ix <- sample(nrow(x), 25)
+sample_ix <- sample(nrow(x), 100)
 x_df <- x[sample_ix, sample_ix, ] %>% # subset pixels
   as.data.frame()
 x_longer <- x_df %>%
