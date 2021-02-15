@@ -49,18 +49,17 @@ home directory,
 
 
 ```
-docker shell > useradd kris
-docker shell > passwd kris # enter a password
-docker shell > mkdir /home/kris/.rstudio
-docker shell > mkdir /home/test/.rstudio/graphics-r3
-docker shell > sudo chown -R kris /home/kris/.rstudio/
+docker shell> useradd test
+docker shell> passwd test # enter a password
+docker shell> mkdir -p /home/test/.rstudio/graphics-r3
+docker shell> sudo chown -R test /home/test/.rstudio/
 ```
 
 Then, we can copy over the contents of this repo to the new `kris` user and
 start Rstudio,
 
 ```
-docker shell > cp -r ~/mappingvis /home/kris/
+docker shell > cp -r ~/mappingvis /home/test/
 docker shell > rstudio-server start
 ```
 
