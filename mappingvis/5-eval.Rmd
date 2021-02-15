@@ -134,7 +134,7 @@ noticeably better than for test samples for the clean-ice examples, but not for
 the debris-covered glaciers. In a future run, it might be worth rebalancing the
 data so that debris-covered glaciers are more common.
 
-```{r, layout="l-body-outset"}
+```{r}
 metrics_ <- metrics %>%
   pivot_longer(precision:recall, names_to = "metric")
 

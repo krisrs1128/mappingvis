@@ -16,9 +16,8 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache = FALSE, message = FALSE, warning = FALSE)
 ```
-
 
 1. In these notes, we generate and visualize patches of data that will be used
 to train the mapping model. This is necessary for a few different reasons,
@@ -49,6 +48,7 @@ library("abind")
 library("dplyr")
 library("gdalUtils")
 library("ggplot2")
+library("gridExtra")
 library("purrr")
 library("raster")
 library("readr")
