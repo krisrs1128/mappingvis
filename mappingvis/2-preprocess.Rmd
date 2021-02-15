@@ -8,13 +8,13 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-   raw_dir: "/home/jovyan/data/raw"
-#  raw_dir: "/Users/kris/data/raw/"
-   out_dir: "/home/jovyan/data/processed/train"
-#  out_dir: "/Users/kris/data/processed/train"
+  raw_dir: "/home/jovyan/data/raw"
+  out_dir: "/home/jovyan/data/processed/train"
   basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
-  #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
   n_patches: 75
+  #raw_dir: "/Users/kris/data/raw/"
+  #out_dir: "/Users/kris/data/processed/train"
+  #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
 ---
 
 ```{r setup, include=FALSE}
