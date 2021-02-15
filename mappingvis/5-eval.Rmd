@@ -8,8 +8,8 @@ author:
 date: "`r Sys.Date()`"
 output: distill::distill_article
 params:
-  preds_dir: "/Users/kris/data/predictions/"
-  geo_dir: "/Users/kris/data/processed/"
+  preds_dir: "/home/jovyan/data/predictions/"
+  geo_dir: "/home/jovyan/data/processed/"
 ---
 
 ```{r setup, include=FALSE}
