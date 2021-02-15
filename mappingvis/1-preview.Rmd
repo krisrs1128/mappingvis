@@ -82,15 +82,22 @@ vrt_path <- file.path(data_dir, "region.vrt")
 gdalbuildvrt(x_paths, vrt_path, ot="float64")
 ```
 
-6. Time for our first visualization! The `glaciers.geojson` file demarcates the
-boundaries for two types of glaciers that are common in the Hindu Kush Himalayas
-region. The full dataset gives coordinates for glaciers across the whole region,
-which spans many countries, making it a bit overwhelming to visualize. Instead,
-let's pick one of 63 basins in the region and visualize its glacier boundaries.
+6. Time for our first visualization! The `glaciers_small.geojson` file
+demarcates the boundaries for two types of glaciers that are common in the Hindu
+Kush Himalayas region. The full version, available in the box folder, gives
+coordinates for glaciers across the whole region, which spans many countries,
+but reading this into Binder would put us against some of the compute limits.
+Instead, let's pick one a small patch from one of 63 basins in the region and
+visualize its glacier boundaries.
 
 ```{r}
-y <- read_sf(file.path(data_dir, "glaciers.geojson")) %>%
-  filter(Sub_basin == "Dudh Koshi")
+y <- read_sf(file.path(data_dir, "glaciers_small.geojson")) %>%
+  filter(
+    Sub_basin == "Dudh Koshi",
+    Longitude < 86.91, Longitude > 86.1,
+    Latitude < 27.81, Latitude > 27.7
+  )
+
 head(y)
 ```
 

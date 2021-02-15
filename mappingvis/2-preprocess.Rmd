@@ -10,10 +10,10 @@ output: distill::distill_article
 params:
   raw_dir: "/home/jovyan/data/raw"
   out_dir: "/home/jovyan/data/processed/train"
-  basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
-  n_patches: 75
   #raw_dir: "/Users/kris/data/raw/"
   #out_dir: "/Users/kris/data/processed/train"
+  basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
+  n_patches: 75
   #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
 ---
 
@@ -68,17 +68,18 @@ theme_set(theme_minimal())
 set.seed(123)
 ```
 
-3. We want to make sure we don't overfit our model. To this end, we'll use
-different geographic sub-basins for training and evaluation. For training, we're
-just using the `Kokcha` basin, and for evaluation, we use `Dudh Koshi`. In
-general, our notebook takes arbitrary lists of basins, specified by links to csv
-files through the `basins` parameter in the header. A [larger
+3. We want to make sure we don't overfit to any particular region. To this end,
+we'll use different geographic sub-basins for training and evaluation. For
+training, we're just using the `Kokcha` basin, and for evaluation, we use `Dudh
+Koshi`. In general, our notebook takes arbitrary lists of basins, specified by
+links to csv files through the `basins` parameter in the header. In practice, a
+[larger
 list](https://uwmadison.box.com/shared/static/up5859yw686v5pcnjcq2xik8v4c69ka3.csv)
-of training basins was used to train a model we'll see soon, but it takes much
-longer to preprocess, and would be a hassle even just to download.
+of training basins would be used to train the model, but working with that is
+much more computationally intensive.
 
 ```{r}
-y_path <- file.path(params$raw_dir, "glaciers.geojson")
+y_path <- file.path(params$raw_dir, "glaciers_small.geojson")
 basins <- read_csv(params$basins)
 
 y <- read_sf(y_path) %>%
