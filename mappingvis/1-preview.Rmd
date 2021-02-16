@@ -13,6 +13,8 @@ params:
   data_links: "https://uwmadison.box.com/shared/static/khd0plylp0o2tyhxlpizjj9rz7n5czya.csv"
 ---
 
+[Rstudio](https://mybinder.org/v2/gh/krisrs1128/mappingvis/master?urlpath=rstudio)
+
 1. In this notebook, we take a first look at the glacier data. We'll download
 the raw annotations and images, using visualization to gain familiarity with the
 structure of the problem.

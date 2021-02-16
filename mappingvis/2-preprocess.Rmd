@@ -17,6 +17,8 @@ params:
   #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
 ---
 
+[Rstudio](https://mybinder.org/v2/gh/krisrs1128/mappingvis/master?urlpath=rstudio)
+
 ```{r setup, include=FALSE}
 rm(list=setdiff(ls(), "params"))
 knitr::opts_chunk$set(echo = TRUE, cache = FALSE, message = FALSE, warning = FALSE)
