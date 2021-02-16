@@ -83,13 +83,10 @@ statistics for every single class.
 6. To illustrate (i) from the previous point, consider the two images below,
 giving the ground truth and predicted probabilities for the clean-ice glacier
 class, for one patch.
-```{r}
-y_hat
-```
 
 ```{r}
-y <- load_npy(paths$path[4])
-y_hat <- load_npy(paths$path[5])
+y <- load_npy(paths$path[2])
+y_hat <- load_npy(paths$path[3])
 p <- list(
   plot_rgb(y, 1, r = NULL, g = NULL, b = 1),
   plot_rgb(y_hat, 1, r = NULL, g = NULL, b = 1)
@@ -116,8 +113,6 @@ data at the level of individual samples, allowing us to make more fine-grained
 assessments of where the model does and does not perform well.
 
 ```{r}
-paths <- paths %>% filter(split == "train")
-print(paths$path)
 metrics <- paths %>%
   split(.$split) %>%
   map(~ metrics_fun(.)) %>%
