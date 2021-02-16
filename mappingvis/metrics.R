@@ -43,7 +43,7 @@ metrics_fun <- function(paths) {
     metrics <- list()
 
     ix <- 1
-    for (i in seq_len(max(paths$ix))) {
+    for (i in unique(paths$ix)) {
         paths_i <- paths %>%
             filter(ix == i) %>%
             split(.$type)
