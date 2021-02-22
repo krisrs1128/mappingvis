@@ -61,3 +61,20 @@ metrics_fun <- function(paths) {
 
     bind_rows(metrics)
 }
+TF_plot<-function(paths,i=1,probability=0.4,channel=1){
+    
+    y_df<-paths %>% filter(ix==i,type=='y',split=='test')
+    y_hat_df<-paths %>% filter(ix==i,type=='y_hat',split=='test')
+    y <- np$load(y_df$path)
+    y_hat <- np$load(y_hat_df$path)
+    
+    tp<-y[channel,,]==1&y_hat[channel,,]>=probability
+    tn<-y[channel,,]==1&y_hat[channel,,]<probability
+    fn<-y[channel,,]==0&y_hat[channel,,]>=probability
+    fp<-y[channel,,]==0&y_hat[channel,,]<probability
+    result<-1*tp+2*tn+3*fn+4*fp
+    par(mar=c(4,4,4,6))
+    par(xpd=TRUE)
+    image(result,col=c(3,1,2,0))
+    legend("right", inset=c(-0.2,0), legend=c("TP","TN","FN","FP"), pch=15, col=c(3,1,2,0),bty="n")
+}  
