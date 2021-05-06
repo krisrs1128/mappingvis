@@ -1,32 +1,13 @@
 ---
 title: "A First Look"
-description: |
-  An initial look at the raw data, with an eye towards preprocessing.
-author:
-  - name: Kris Sankaran
-    affiliation: UW Madison
-date: "`r Sys.Date()`"
-output: distill::distill_article
 params:
-  data_dir: "/home/jovyan/data/raw/"
-  #data_dir: "/Users/kris/data/raw/"
-  data_links: "https://uwmadison.box.com/shared/static/khd0plylp0o2tyhxlpizjj9rz7n5czya.csv"
+  y_path: "/vsicurl/https://glaciersblob.blob.core.windows.net/glaciersdata-kris/glaciers.geojson"
+  x_path: "/vsicurl/https://glaciersblob.blob.core.windows.net/glaciersdata-kris/region.vrt"
 ---
-
-[Rstudio](https://mybinder.org/v2/gh/krisrs1128/mappingvis/master?urlpath=rstudio)
-
-1. In this notebook, we take a first look at the glacier data. We'll download
-the raw annotations and images, using visualization to gain familiarity with the
-structure of the problem.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, cache = TRUE)
 ```
-
-2. We'll be using the R packages below. `dplyr`, `ggplot2`, and `tidyr` are part
-of R's tidy data ecosystem. `gdalutils`, `raster`, and `sf` are packages for
-general spatial data manipulation. `RStoolbox` gives useful functions for
-spatial data visualization specifically.
 
 ```{r}
 library("RStoolbox")
@@ -41,112 +22,38 @@ source("data.R")
 theme_set(theme_bw())
 ```
 
-3. In the block below, we'll create a directory structure to store the data in
-our analysis. If you're working on your own computer, you can change the
-directory to which files are written by modifying the `params` block in the
-header of this rmarkdown file.
+Polygon plots.
 
 ```{r}
-data_dir <- params$data_dir
-dir.create(params$data_dir, recursive = TRUE)
-```
-
-4. Next, we download the actual imagery. The data are currently stored on a UW
-Madison Box folder. We first download a file containing all the raw data
-links^[It's very meta.], and then loop over just those links. This step can take
-some time, because the files are relatively large.
-
-```{r}
-# download all linked data
-data_links <- read_csv(params$data_links) %>%
-  filter(download)
-
-for (i in seq_len(nrow(data_links))) {
-  download.file(
-    data_links$link[i], 
-    file.path(data_dir, data_links$name[i])
-  )
-}
-```
-
-5. Often, we'll want to find the image associated with a particular point on the
-earth. In the current form, this is quite hard to do: we'd have to check image
-by image, until we found the one that had the geographic coordinate that we're
-looking for. A much more convenient format is something called a ``Virtual
-Tiff.'' This indexes all the imagery we had originally downloaded, letting us
-look up imagery just by specifying the geographic coordinates. This means we can
-hide all the complexity of working with many imagery files and pretend we had a
-single (very large) image.
-
-```{r}
-x_paths <- dir(data_dir, "*tiff", full.names = TRUE)
-vrt_path <- file.path(data_dir, "region.vrt")
-gdalbuildvrt(x_paths, vrt_path, ot="float64")
-```
-
-6. Time for our first visualization! The `glaciers_small.geojson` file
-demarcates the boundaries for two types of glaciers that are common in the Hindu
-Kush Himalayas region. The full version, available in the box folder, gives
-coordinates for glaciers across the whole region, which spans many countries,
-but reading this into Binder would put us against some of the compute limits.
-Instead, let's pick one a small patch from one of 63 basins in the region and
-visualize its glacier boundaries.
-
-```{r}
-y <- read_sf(file.path(data_dir, "glaciers_small.geojson")) %>%
+y <- read_sf(params$y_path) %>%
   filter(
     Sub_basin == "Dudh Koshi",
     Longitude < 86.91, Longitude > 86.1,
     Latitude < 27.81, Latitude > 27.7
   )
 
-head(y)
-```
-
-```{r}
 ggplot(y, aes(fill = Glaciers)) +
   geom_sf() +
   scale_fill_manual(values = c("#93b9c3", "#4e326a")) +
   theme(legend.position = "bottom")
 ```
 
-7. From a technical perspective, there are two points worth noting. First, we
-were able to use dplyr's `filter` function on these glaciers, as if they were
-stored in an ordinary data frame (they're in fact stored in a spatial data
-frame). Being able to use concepts of tidy data manipulation in spatial problems
-can make our lives much easier. Second, notice that we're using `tm_shape` from
-the `tmap` package -- this package makes much nicer spatial data visualizations
-than simply calling `plot()` from base R. It also implements a grammar of
-graphics for spatial data, allowing us to layer on different visual encodings in
-a flexible way.
-
-8. Next, let's visualize the satellite imagery in that region. The satellite
-images are not like ordinary images from a camera -- they have many sensors. In
-our case, each pixel is associated with 15 measurements. For example, the block
-below first plots the RGB colors associated with the region before showing a
-composite that turns all the glaciers blue.
+Multichannel plot.
 
 ```{r}
-x <- read_subset(vrt_path, st_bbox(y))
+x <- read_subset(params$x_path, st_bbox(y))
 ggRGB(x)
 ggRGB(x, r = 5, g = 4, b = 2)
 ```
 
-9. Notice the similarities with the outlines in the `glaciers.geojson` file. We
-can more or less distinguish the clean ice and debris-covered glaciers from the rest of
-the image. Looking a bit more carefully, though, we realize that there are lots
-of areas that fall into the bluish regions but which *aren't* labeled as clean
-ice glacier. We might hope that some of the other channels make the difference
-more visible, but it seems like there might be some danger of false positives.
-Also, it seems like the debris-covered glaciers are only a subtley different
-color from the background -- their tendril-like shape is a much better visual
-clue.
+Overlaid multichannel.
 
-10. We've managed to use `geom_sf` and `ggRGB` to avoid having to convert the
-raw data to standard R data frames. There are some situations, however, when it
-can be useful to make that conversion. The code below provides an example that
-extracts the slope channel from the satellite image and visualizes it using
-standard ggplot2. It seems like the debris-covered glaciers are relatively flat.
+```{r}
+ggRGB(x) +
+  geom_sf(data = y, aes(fill = Glaciers))
+```
+
+Slope plot.
 
 ```{r}
 slope <- subset(x, 15) %>%
@@ -162,11 +69,7 @@ ggplot(slope, aes(x = x, y = y)) +
 rm(slope) # save space
 ```
 
-11. Let's make a few histograms, one for each satellite sensor. From this view,
-it becomes clear that we're going to have to preprocess these data before
-modeling. First, the ranges across sensors can vary substantially. Second, the
-BQA channels is not actually a sensor measurement -- it's a quality assignment,
-which is why it takes on so few values.
+Histograms.
 
 ```{r}
 sample_ix <- sample(nrow(x), 100)
@@ -180,12 +83,7 @@ ggplot(x_longer) +
   facet_wrap(~ name, scale = "free_x")
 ```
 
-12. For our final view, let's make a scatterplot of a few channels against one
-another. We'll bin using `geom_hex`, because otherwise the points overlap too
-much. This visualization makes it clear how the two `B6` channels are nearly
-copies of one another, so we can safely drop one of them from our visualization.
-For reference, we also plot the first two channels, `B1` and `B2`, against one
-another.
+Bivariate plot.
 
 ```{r}
 ggplot(x_df, aes(x = B6_VCID_1, y = B6_VCID_2, fill = log(..count..))) +
@@ -198,9 +96,3 @@ ggplot(x_df %>% filter(B1 != 255, B2 != 255), aes(x = B1, y = B2, fill = log(..c
   scale_fill_viridis_c() +
   coord_fixed()
 ```
-
-13. We haven't made too many plots, but we've already gained some valuable
-intuition about (i) the types of visual features that might be useful for
-identifying the two types of glaciers and (ii) some properties of the data that,
-if not properly accounted for, could be disastrous for any downstream modeling
-(no matter how fancy the model).

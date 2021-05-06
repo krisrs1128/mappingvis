@@ -1,35 +1,13 @@
 ---
 title: "Model Evaluation"
-description: |
-    Studying saved predictions from a model.
-author:
-  - name: Kris Sankaran
-    affiliation: UW Madison
-date: "`r Sys.Date()`"
-output: distill::distill_article
 params:
-  preds_dir: "/home/jovyan/data/predictions/"
-  geo_dir: "/home/jovyan/data/processed/"
-  #preds_dir: "/Users/kris/data/predictions/"
-  #geo_dir: "/Users/kris/data/processed/"
+  preds_dir: "/Users/kris/data/predictions/"
+  geo_dir: "/Users/kris/data/processed/"
 ---
-
-[Rstudio](https://mybinder.org/v2/gh/krisrs1128/mappingvis/master?urlpath=rstudio)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 ```
-
-1. In these notes, we'll visualize some of the predictions from our trained
-model. This will help us develop a more nuanced understanding of model quality,
-rather than average test set error alone. Indeed, while training and test errors
-are useful for diagnosing whether a model is over or underfitting a dataset,
-they alone don't tell us when a model is most likely to make mistakes.
-
-2. As usual, our first step is to load libraries that will be useful in this
-analysis. By this point, we have seen most of this mix of spatial and tidy data
-analysis packages. We use the `reticulate` package to read the raw predictions,
-which were saved as `numpy` arrays, into R arrays.
 
 ```{r}
 library("RStoolbox")
@@ -49,11 +27,6 @@ source("metrics.R")
 theme_set(theme_minimal())
 ```
 
-3. We will download predictions that would have been saved by the
-`save_preds.ipynb` script, if we had let it run for a few more minutes. The
-download still takes time (the file is a little over 500MB), but it is still
-faster than waiting for the predictions to be saved.
-
 ```{r}
 preds_dir <- params$preds_dir
 dir.create(preds_dir)
@@ -63,27 +36,10 @@ untar(preds_file, exdir = params$preds_dir)
 unlink(preds_file)
 ```
 
-4. The downloaded data include more than the predictions `y_hat` -- they also
-include the saved patches `x` and ground truth labels `y`. We have this for both
-training and test regions. To manage all these different files, let's create a
-data frame that helps keep track of which types of files are where.
-
 ```{r}
 paths <- prediction_paths(preds_dir)
 head(paths)
 ```
-
-5. How good are the predictions? Our setting is a little trickier than the usual
-regression or classification settings. This is because (i) for each sample, we
-make predictions at every single pixel and (ii) we have several classes of
-interest. For (i), the idea is to evaluate the precision and recall associated
-with the entire patch as we vary the thresholds used to demarcate classes. See
-the next point. For (ii), we make sure to compute these precision and recall
-statistics for every single class.
-
-6. To illustrate (i) from the previous point, consider the two images below,
-giving the ground truth and predicted probabilities for the clean-ice glacier
-class, for one patch.
 
 ```{r}
 y <- load_npy(paths$path[2])
@@ -95,24 +51,12 @@ p <- list(
 grid.arrange(grobs = p, ncol = 2)
 ```
 
-To assign a class to every pixel, we would need to declare probability
-thresholds, above which the pixel belongs to the target class (e.g., clean ice
-glacier) and below which it is considered background. The for loop below varies
-the threshold, going from lenient (high glacier recall, but low precision) to
-strict (low glacier recall, but high precision).
-
 ```{r, animation.hook="gifski", interval = 0.02}
 thresholds <- c(seq(0.05, 0.9, 0.01), rep(0.9, 10))
 for (i in seq_along(thresholds)) {
   print(plot_rgb(y_hat > thresholds[i], 1, r = NULL, g = NULL, b = 1))
 }
 ```
-
-7. The block below computes precision and recall across a range of thresholds,
-for each sample in the training and test splits. This generates new diagnostic
-data at the level of individual samples, allowing us to make more fine-grained
-assessments of where the model does and does not perform well.
-
 ```{r}
 metrics <- paths %>%
   split(.$split) %>%
@@ -120,31 +64,6 @@ metrics <- paths %>%
   bind_rows(.id = "split")
 head(metrics)
 ```
-
-8. The block below plots the metrics across samples. Each line corresponds to
-one <span style="color: #fc8d62;">training</span> or <span style="color:
-#66c2a5;">test</span> sample for a given class. The three classes are arranged
-in the separate columns -- from left to right, they are clean-ice,
-debris-covered, and background class. No one threshold seems to stand out, with
-precision and recall curves varying smoothly across thresholds.
-
-9. Performance on the debris-covered glaciers is noticeably worse than on the
-clean-ice ones. A few examples from each class are uniformly easier than others,
-but generally, the samples within a given class have comparable difficulty with
-one another.
-
-10. It seems like, not only have we avoided overfitting the glacier classes --
-the test performance on the debris-covered class is better than the performance
-on the clean-ice glacier class! This seems to be a consequence of the fact that
-the training and test data are not independent and identically distributed. In
-fact, the Dudh Koshi basin was chosen for testing because it's known to have a
-high density of debris-covered glaciers, and they are likely more clearly
-visually defined than the glaciers present across different training basins.
-Besides this, note the wide spread in precision and recall curves, even within
-distribution. It appears that, even when our model has good average performance,
-the performance on any individual sample can be quite variable. Some detective
-work could lead to improved models, and selective prediction could be used to
-distinguish easy from difficult samples.
 
 ```{r}
 metrics_ <- metrics %>%
@@ -163,10 +82,6 @@ ggplot(metrics_, aes(x = threshold, y = value, col = split)) +
   )
 ```
 
-12. Let's visualize a few samples that have especially good and bad predictions.
-To identify them, we compute the average precision and recall across all tested
-thresholds and then sort samples from best to worst.
-
 ```{r}
 metrics_ %>%
   group_by(metric, path, class) %>%
@@ -174,14 +89,9 @@ metrics_ %>%
   arrange(class, metric, desc(mean))
 ```
 
-13. It seems like sample 29 in the test split is one of the better ones for the
-debris-covered class. How does it look like? The block pulls the paths for `x`,
-`y`, and `y_hat` for this example and visualizes them. Try fiddling with the
-`ix` and `split` parameters to look at a few different examples.
-
-```{r, layout="l-body-outset"}
+```{r}
 ims <- paths %>%
-  filter(ix == 29, split == "test") %>% # try a few other examples
+  filter(ix == 29, split == "test") %>%
   split(.$type) %>%
   map(~ load_npy(.$path[1]))
 
