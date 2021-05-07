@@ -1,11 +1,11 @@
 ---
 title: "Data Preparation"
 params:
-  out_dir: "/Users/kris/data/processed/train"
+  out_dir: "processed/train"
   x_path: "/vsicurl/https://glaciersblob.blob.core.windows.net/glaciersdata-kris/region.vrt"
   y_path: "/vsicurl/https://glaciersblob.blob.core.windows.net/glaciersdata-kris/glaciers.geojson"
   basins: "https://uwmadison.box.com/shared/static/2ptmi9b4gt5d5vyusju5u8kn5n1s6hnd.csv"
-  n_patches: 75
+  n_patches: 200
   #basins: "https://uwmadison.box.com/shared/static/iilcsf3bbois8tmt7pklriu219s4wlu6.csv" # for test basins
 ---
 
