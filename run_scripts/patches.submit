@@ -1,5 +1,5 @@
 universe = docker
-docker_image = krisrs1128/mappingvis
+docker_image = krisrs1128/mappingvis:031001
 log = /home/ksankaran/logs/baseline.log
 error = /home/ksankaran/logs/baseline.err
 output = /home/ksankaran/logs/baseline.out
