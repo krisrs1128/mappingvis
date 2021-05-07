@@ -1,0 +1,11 @@
+universe = docker
+docker_image = krisrs1128/mappingvis
+log = /home/ksankaran/logs/baseline.log
+error = /home/ksankaran/logs/baseline.err
+output = /home/ksankaran/logs/baseline.out
+executable = patches.sh
+environment = "B=$(Process)"
+request_cpus = 1
+request_memory = 2GB
+request_disk = 1GB
+queue 1
